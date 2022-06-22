@@ -1,0 +1,45 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: sudo apt-get install -y build-essential libva-dev libdrm-dev
+
+      - name: Install libva
+        run: |
+          git clone -b 2.14.0 --depth=1 https://github.com/intel/libva libva
+          cd libva
+          ./autogen.sh
+          ./configure
+          make
+          sudo make install
+
+      - name: Install onevpl
+        run: |
+          git clone -b v2022.1.5 https://github.com/oneapi-src/oneVPL/ onevpl
+          cd onevpl
+          mkdir build && cd build
+          cmake ..
+          make
+          sudo make install
+
+
+      - name: Install onevpl-intel-gpu
+        run: |
+          git clone -b intel-onevpl-22.4.3 --depth=1 https://github.com/oneapi-src/oneVPL-intel-gpu onevpl-gpu
+          cd onevpl-gpu
+          mkdir build && cd build
+          cmake ..
+          make
+          sudo make install
+
+      - name: Build examples
+        run: |
+          make
