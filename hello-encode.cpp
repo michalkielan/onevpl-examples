@@ -19,33 +19,31 @@
 
 constexpr const int kWait100Ms = 100;
 constexpr const int kFrameRate = 30;
-constexpr const char *kInputFilename = "cars_320x240.i420";
+constexpr const char* kInputFilename = "cars_320x240.i420";
 constexpr const int kWidth = 320;
 constexpr const int kHeight = 240;
 constexpr const bool kUseVideoMemory = false;
-constexpr const char *kEncodedFileName = "out.h265";
+constexpr const char* kEncodedFileName = "out.h265";
 
 namespace vpl = oneapi::vpl;
 
 static void writeEncodedStream(std::shared_ptr<vpl::bitstream_as_dst> bits,
-                               std::ofstream *fileStream) {
+                               std::ofstream* fileStream) {
   auto [ptr, len] = bits->get_valid_data();
-  fileStream->write(reinterpret_cast<char *>(ptr), len);
+  fileStream->write(reinterpret_cast<char*>(ptr), len);
   bits->set_DataLength(0);
   return;
 }
 
 int main() {
   // Setup input and output files
-  std::ifstream source{kInputFilename,
-                       std::ios_base::in | std::ios_base::binary};
+  std::ifstream source{kInputFilename, std::ios_base::in | std::ios_base::binary};
   if (!source) {
     std::cout << "Couldn't open input file" << std::endl;
     return 1;
   }
 
-  std::ofstream sink{kEncodedFileName,
-                     std::ios_base::out | std::ios_base::binary};
+  std::ofstream sink{kEncodedFileName, std::ios_base::out | std::ios_base::binary};
   if (!sink) {
     std::cout << "Couldn't open output file" << std::endl;
     return 1;
@@ -58,15 +56,14 @@ int main() {
   // Initialize VPL session for any implementation of HEVC/H265 encode
   // Default implementation selector. Selects first impl based on property list.
   vpl::default_selector impl_sel{
-      {vpl::dprops::impl(impl_type), vpl::dprops::api_version(2, 5),
-       vpl::dprops::encoder(
-           {vpl::dprops::codec_id(vpl::codec_format_fourcc::hevc)})}};
+      {vpl::dprops::impl(impl_type),
+       vpl::dprops::api_version(2, 5),
+       vpl::dprops::encoder({vpl::dprops::codec_id(vpl::codec_format_fourcc::hevc)})}};
 
   vpl::ExtDecodeErrorReport err_report{};
-  vpl::color_format_fourcc input_fourcc =
-      (impl_type == vpl::implementation_type::sw)
-          ? vpl::color_format_fourcc::i420
-          : vpl::color_format_fourcc::nv12;
+  vpl::color_format_fourcc input_fourcc = (impl_type == vpl::implementation_type::sw)
+                                              ? vpl::color_format_fourcc::i420
+                                              : vpl::color_format_fourcc::nv12;
 
   // create raw freames reader
   vpl::raw_frame_file_reader reader(kWidth, kHeight, input_fourcc, source);
@@ -88,21 +85,19 @@ int main() {
   enc_params->set_RateControlMethod(vpl::rate_control_method::cqp);
   enc_params->set_frame_info(std::move(info));
   enc_params->set_CodecId(vpl::codec_format_fourcc::hevc);
-  enc_params->set_IOPattern((kUseVideoMemory)
-                                ? vpl::io_pattern::in_device_memory
-                                : vpl::io_pattern::in_system_memory);
+  enc_params->set_IOPattern((kUseVideoMemory) ? vpl::io_pattern::in_device_memory
+                                              : vpl::io_pattern::in_system_memory);
 
   try {
     encoder->Init(enc_params.get());
-  } catch (vpl::base_exception &e) {
+  } catch (vpl::base_exception& e) {
     std::cout << "Encoder init failed: " << e.what() << std::endl;
     return -1;
   }
 
   std::cout << info << std::endl;
   std::cout << "Init done" << std::endl;
-  std::cout << "Encoding " << kInputFilename << " -> " << kEncodedFileName
-            << std::endl;
+  std::cout << "Encoding " << kInputFilename << " -> " << kEncodedFileName << std::endl;
 
   // main encoder Loop
   while (is_stillgoing == true) {
@@ -111,7 +106,7 @@ int main() {
     auto bitstream = std::make_shared<vpl::bitstream_as_dst>();
     try {
       wrn = encoder->encode_frame(bitstream);
-    } catch (vpl::base_exception &e) {
+    } catch (vpl::base_exception& e) {
       std::cout << "Encoder died: " << e.what() << std::endl;
       return -1;
     }
