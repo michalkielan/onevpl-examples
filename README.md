@@ -3,12 +3,12 @@
 > Video processing examples using onevpl library.
 
 ## Requirements
-onevpn api and one of the implementation.
+onevpl api and one of the implementation.
 https://github.com/oneapi-src/oneVPL
 
 ### Install onevpl api from source
 ```
-$ git clone https://github.com/oneapi-src/oneVPL/ onevpl
+$ git clone https://github.com/oneapi-src/oneVPL onevpl
 $ cd onevpl
 $ mkdir build && cd build
 $ cmake ..
