@@ -43,3 +43,18 @@ jobs:
       - name: Build examples
         run: |
           make
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - name: Install Python dependencies
+        run: pip install pylint flake8
+
+
+      - name: Python syntax check
+        run: |
+          pylint *.py --errors-only --exit-zero
+          flake8 *.py --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 *.py --count --exit-zero --statistics
