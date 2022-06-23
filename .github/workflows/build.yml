@@ -10,7 +10,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install dependencies
-        run: sudo apt-get install -y libva-dev libdrm-dev ninja-build
+        run: |
+          sudo apt-get install -y libva-dev libdrm-dev ninja-build build-essential yasm nasm libva-drm2 meson
 
       - name: Install libva
         run: |
@@ -29,6 +30,14 @@ jobs:
           cmake -GNinja ..
           ninja
           sudo ninja install
+
+      - name: Install onevpl-cpu
+        run: |
+          git clone -b v2022.1.5 https://github.com/oneapi-src/oneVPL-cpu onevpl-cpu
+          cd onevpl-cpu
+          source script/bootstrap
+          script/build
+          sudo script/install
 
       - name: Install onevpl-intel-gpu
         run: |
