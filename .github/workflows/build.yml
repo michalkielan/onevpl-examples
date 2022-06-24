@@ -68,7 +68,7 @@ jobs:
         env:
           PYTHONPATH: /usr/local/lib/python
         run: |
-          pylint *.py --errors-only --exit-zero
+          pylint *.py --errors-only
           flake8 *.py --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 *.py --count --exit-zero --statistics
 
