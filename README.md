@@ -16,14 +16,13 @@ $ make
 $ sudo make install
 ```
 
-### Install onevpl intel gpu implementation from source.
+### Install onevpl cpu implementation from source.
 ```
-$ git clone https://github.com/oneapi-src/oneVPL-intel-gpu onevpl-gpu
-$ cd onevpl-gpu
-$ mkdir build && cd build
-$ cmake ..
-$ make
-$ sudo make install
+$ git clone https://github.com/oneapi-src/oneVPL-cpu onevpl-cpu
+$ cd onevpl-cpu
+$ source script/bootstrap
+$ script/build
+$ sudo script/install
 ```
 
 ## Build examples
@@ -33,7 +32,7 @@ $ ./hello-encode
     BitDepthLuma   = 0
     BitDepthChroma = 0
     Shift          = Not Specifyed
-    Color Format   = NV12
+    Color Format   = IYUV
     Size [W,H]     = [320,240]
     ROI [X,Y,W,H]  = [0,0,320,240]
     FrameRate [N:D]= 30:1
@@ -50,15 +49,15 @@ Encoded 30 frames
 
 Base:
     AllocId    = 0
-    AsyncDepth = 5
+    AsyncDepth = Not Specifyed
     Protected  = 0
     IOPattern  = In System Memory
 Codec:
-    LowPower           = OFF
+    LowPower           = Unset
     BRCParamMultiplier = 1
     CodecId            = HEVC
     CodecProfile       = 1
-    CodecLevel         = 20
+    CodecLevel         = 0
     NumThread          = 0
 FrameInfo:
     BitDepthLuma   = 8
@@ -74,22 +73,22 @@ FrameInfo:
 
 Encoder:
     TargetUsage       = 4
-    GopPicSize        = 65535
-    GopRefDist        = 8
+    GopPicSize        = Not Specifyed
+    GopRefDist        = Not Specifyed
     GopOptFlag        = Value is out of possible values
     IdrInterval       = 0
     RateControlMethod = CQP
-    InitialDelayInKB  = 26
-    QPI               = 26
-    Accuracy          = 26
-    BufferSizeInKB    = 115
-    TargetKbps        = 28
-    QPP               = 28
-    ICQQuality        = 28
-    MaxKbps           = 30
-    QPB               = 30
-    Convergence       = 30
-    NumSlice          = 1
-    NumRefFrame       = 4
+    InitialDelayInKB  = 0
+    QPI               = 0
+    Accuracy          = 0
+    BufferSizeInKB    = 0
+    TargetKbps        = 0
+    QPP               = 0
+    ICQQuality        = 0
+    MaxKbps           = 0
+    QPB               = 0
+    Convergence       = 0
+    NumSlice          = Not Specifyed
+    NumRefFrame       = Not Specifyed
     EncodedOrder      = False
 ```

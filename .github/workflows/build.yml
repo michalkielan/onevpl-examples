@@ -2,6 +2,9 @@ name: build
 
 on: [push, pull_request]
 
+env:
+  LD_LIBRARY_PATH: /usr/local/lib64:/usr/local/lib/
+
 jobs:
   build:
       runs-on: ubuntu-latest
@@ -39,15 +42,6 @@ jobs:
           script/build
           sudo script/install
 
-      - name: Install onevpl-intel-gpu
-        run: |
-          git clone -b intel-onevpl-22.4.3 --depth=1 https://github.com/oneapi-src/oneVPL-intel-gpu onevpl-gpu
-          cd onevpl-gpu
-          mkdir build && cd build
-          cmake -GNinja ..
-          ninja
-          sudo ninja install
-
       - name: Build examples
         run: |
           make
@@ -66,3 +60,8 @@ jobs:
           pylint *.py --errors-only --exit-zero
           flake8 *.py --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 *.py --count --exit-zero --statistics
+
+      - name: Run encode example
+        run: |
+          ./hello_encode
+          #python hello_encode.py TODO: Crashes on ModuleNotFoundError

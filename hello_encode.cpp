@@ -51,7 +51,7 @@ int main() {
 
   int frame_num = 0;
   bool is_stillgoing = true;
-  vpl::implementation_type impl_type{vpl::implementation_type::hw};
+  vpl::implementation_type impl_type{vpl::implementation_type::sw};
 
   // Initialize VPL session for any implementation of HEVC/H265 encode
   // Default implementation selector. Selects first impl based on property list.
