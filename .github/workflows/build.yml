@@ -2,20 +2,27 @@ name: build
 
 on: [push, pull_request]
 
+env:
+  LD_LIBRARY_PATH: /usr/local/lib64:/usr/local/lib/
 
 jobs:
   build:
       runs-on: ubuntu-20.04
-      env:
-        CC: /usr/bin/clang-12
-        CXX: /usr/bin/clang++-12
       steps:
       - name: Checkout
         uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - name: Install Python dependencies
+        run: pip install pylint flake8
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -y libva-dev libdrm-dev ninja-build build-essential yasm nasm libva-drm2 meson
+          sudo apt-get install -y libva-dev libdrm-dev ninja-build build-essential yasm nasm libva-drm2 meson python3-pybind11 pybind11-dev
 
       - name: Install libva
         run: |
@@ -31,7 +38,7 @@ jobs:
           git clone -b v2022.1.5 https://github.com/oneapi-src/oneVPL onevpl
           cd onevpl
           mkdir build && cd build
-          cmake -GNinja ..
+          cmake -GNinja -DBUILD_PYTHON_BINDING=ON ..
           ninja
           sudo ninja install
 
@@ -47,24 +54,18 @@ jobs:
         run: |
           make
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
-
-      - name: Install Python dependencies
-        run: pip install pylint flake8
-
-
       - name: Python syntax check
         run: |
           pylint *.py --errors-only --exit-zero
           flake8 *.py --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 *.py --count --exit-zero --statistics
 
-      - name: Run encode example
-        env:
-          LD_LIBRARY_PATH: /usr/local/lib64:/usr/local/lib/
+      - name: Run encode example (C++)
         run: |
           ./hello_encode
-          #python hello_encode.py TODO: Crashes on ModuleNotFoundError
+
+      - name: Run encode example (Python)
+        env:
+          PYTHONPATH: /usr/local/lib/python
+        run: |
+          python hello_encode.py

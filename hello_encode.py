@@ -45,7 +45,7 @@ def main():
     opts = pyvpl.properties()
     opts.api_version = (2, 5)
     opts.impl = pyvpl.implementation_type.sw
-    input_fourcc = pyvpl.color_format_fourcc.nv12
+    input_fourcc = pyvpl.color_format_fourcc.i420
     opts.encoder.enc_profile.enc_mem_desc.color_format = input_fourcc
     opts.encoder.codec_id = [pyvpl.codec_format_fourcc.hevc]
     sel_default = pyvpl.default_selector(opts)
