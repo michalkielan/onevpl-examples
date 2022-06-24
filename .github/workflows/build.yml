@@ -2,12 +2,13 @@ name: build
 
 on: [push, pull_request]
 
-env:
-  LD_LIBRARY_PATH: /usr/local/lib64:/usr/local/lib/
 
 jobs:
   build:
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-20.04
+      env:
+        CC: /usr/bin/clang-12
+        CXX: /usr/bin/clang++-12
       steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -62,6 +63,8 @@ jobs:
           flake8 *.py --count --exit-zero --statistics
 
       - name: Run encode example
+        env:
+          LD_LIBRARY_PATH: /usr/local/lib64:/usr/local/lib/
         run: |
           ./hello_encode
           #python hello_encode.py TODO: Crashes on ModuleNotFoundError
