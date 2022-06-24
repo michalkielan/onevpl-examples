@@ -22,7 +22,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -y libva-dev libdrm-dev ninja-build build-essential yasm nasm libva-drm2 meson python3-pybind11 pybind11-dev
+          sudo apt-get install -y \
+            build-essential \
+            libdrm-dev \
+            libva-dev \
+            libva-drm2 \
+            meson \
+            nasm \
+            ninja-build \
+            pybind11-dev \
+            python3-pybind11 \
+            yasm \
 
       - name: Install libva
         run: |
@@ -55,6 +65,8 @@ jobs:
           make
 
       - name: Python syntax check
+        env:
+          PYTHONPATH: /usr/local/lib/python
         run: |
           pylint *.py --errors-only --exit-zero
           flake8 *.py --count --select=E9,F63,F7,F82 --show-source --statistics
