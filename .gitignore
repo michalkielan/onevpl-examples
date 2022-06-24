@@ -30,7 +30,7 @@
 *.exe
 *.out
 *.app
-hello-encode
+hello_encode
 
 # Output files
 out.h265

@@ -17,13 +17,14 @@
 
 #define ALIGN16(value) (((value + 15) >> 4) << 4)
 
-constexpr const int kWait100Ms = 100;
-constexpr const int kFrameRate = 30;
-constexpr const char* kInputFilename = "cars_320x240.i420";
-constexpr const int kWidth = 320;
-constexpr const int kHeight = 240;
-constexpr const bool kUseVideoMemory = false;
 constexpr const char* kEncodedFileName = "out.h265";
+constexpr const char* kInputFilename = "cars_320x240.i420";
+constexpr const int kFrameRate = 30;
+constexpr const int kHeight = 240;
+constexpr const int kWidth = 320;
+constexpr const int kWait100Ms = 100;
+constexpr const bool kUseHwImplementation = false;
+constexpr const bool kUseVideoMemory = false;
 
 namespace vpl = oneapi::vpl;
 
@@ -51,7 +52,8 @@ int main() {
 
   int frame_num = 0;
   bool is_stillgoing = true;
-  vpl::implementation_type impl_type{vpl::implementation_type::sw};
+  vpl::implementation_type impl_type{kUseHwImplementation ? vpl::implementation_type::hw
+                                                          : vpl::implementation_type::sw};
 
   // Initialize VPL session for any implementation of HEVC/H265 encode
   // Default implementation selector. Selects first impl based on property list.
