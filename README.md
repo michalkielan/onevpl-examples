@@ -1,4 +1,4 @@
-[![Build](https://github.com/michalkielan/onevpl-examples/actions/workflows/build.yml/badge.svg)](https://github.com/michalkielan/onevpl-examples/actions/workflows/build.yml)
+[![Build](https://github.com/michalkielan/onevpl-examples/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/michalkielan/onevpl-examples/actions/workflows/build.yml?query=branch%3Amaster)
 # onevpl examples
 > Video processing examples using onevpl library.
 
