@@ -24,6 +24,7 @@ INPUT_FILENAME = "cars_320x240.i420"
 ENCODED_FILENAME = "out.h265"
 WIDTH = 320
 HEIGHT = 240
+USE_HW_IMPLEMENTATION = False
 
 
 def verify(epectation, msg):
@@ -44,15 +45,23 @@ def main():
     frame_count = 0
     opts = pyvpl.properties()
     opts.api_version = (2, 5)
-    opts.impl = pyvpl.implementation_type.sw
-    input_fourcc = pyvpl.color_format_fourcc.i420
+    opts.impl = (
+        pyvpl.implementation_type.hw
+        if USE_HW_IMPLEMENTATION
+        else pyvpl.implementation_type.sw
+    )
+    input_fourcc = (
+        pyvpl.color_format_fourcc.nv12
+        if opts.impl == pyvpl.implementation_type.hw
+        else pyvpl.color_format_fourcc.i420
+    )
     opts.encoder.enc_profile.enc_mem_desc.color_format = input_fourcc
     opts.encoder.codec_id = [pyvpl.codec_format_fourcc.hevc]
     sel_default = pyvpl.default_selector(opts)
 
-    with pyvpl.raw_frame_file_reader_by_name(WIDTH, HEIGHT,
-                                             input_fourcc,
-                                             INPUT_FILENAME) as source:
+    with pyvpl.raw_frame_file_reader_by_name(
+        WIDTH, HEIGHT, input_fourcc, INPUT_FILENAME
+    ) as source:
         with open(ENCODED_FILENAME, "wb") as sink:
             # Load session and initialize encoder
             session = pyvpl.encode_session(sel_default, source)
@@ -82,17 +91,18 @@ def main():
             print(str(info))
             print("Init done")
             print(f"Encoding {INPUT_FILENAME} -> {ENCODED_FILENAME}")
+
             # check and report implementation details
-            version = session.version
-            verify(version.Major > 1,
-                   "Sample requires 2.x API implementation, exiting")
+            verify(
+                session.version.Major > 1,
+                "Sample requires 2.x API implementation, exiting",
+            )
 
             for bits in session:
                 frame_count += 1
                 sink.write(bits)
 
             print(f"Encoded {frame_count} frames")
-
             print("")
             print("-- Encode information --")
             print("")
@@ -101,5 +111,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
