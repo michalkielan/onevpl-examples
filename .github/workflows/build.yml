@@ -23,7 +23,7 @@ jobs:
 
       - name: Install onevpl
         run: |
-          git clone -b v2022.1.5 https://github.com/oneapi-src/oneVPL/ onevpl
+          git clone -b v2022.1.5 https://github.com/oneapi-src/oneVPL onevpl
           cd onevpl
           mkdir build && cd build
           cmake -GNinja ..
