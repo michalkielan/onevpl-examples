@@ -55,8 +55,9 @@ def main():
         if opts.impl == pyvpl.implementation_type.hw
         else pyvpl.color_format_fourcc.i420
     )
+    codec_type = pyvpl.codec_format_fourcc.hevc
     opts.encoder.enc_profile.enc_mem_desc.color_format = input_fourcc
-    opts.encoder.codec_id = [pyvpl.codec_format_fourcc.hevc]
+    opts.encoder.codec_id = [codec_type]
     sel_default = pyvpl.default_selector(opts)
 
     with pyvpl.raw_frame_file_reader_by_name(
@@ -78,7 +79,7 @@ def main():
 
             params.RateControlMethod = pyvpl.rate_control_method.cqp
             params.frame_info = info
-            params.CodecId = pyvpl.codec_format_fourcc.hevc
+            params.CodecId = codec_type
             params.IOPattern = pyvpl.io_pattern.in_system_memory
 
             # Getting VAAPI handle not supported in Python sample

@@ -52,15 +52,15 @@ int main() {
 
   int frame_num = 0;
   bool is_stillgoing = true;
+  auto codec_type = vpl::codec_format_fourcc::hevc;
   vpl::implementation_type impl_type{kUseHwImplementation ? vpl::implementation_type::hw
                                                           : vpl::implementation_type::sw};
 
   // Initialize VPL session for any implementation of HEVC/H265 encode
   // Default implementation selector. Selects first impl based on property list.
-  vpl::default_selector impl_sel{
-      {vpl::dprops::impl(impl_type),
-       vpl::dprops::api_version(2, 5),
-       vpl::dprops::encoder({vpl::dprops::codec_id(vpl::codec_format_fourcc::hevc)})}};
+  vpl::default_selector impl_sel{{vpl::dprops::impl(impl_type),
+                                  vpl::dprops::api_version(2, 5),
+                                  vpl::dprops::encoder({vpl::dprops::codec_id(codec_type)})}};
 
   vpl::ExtDecodeErrorReport err_report{};
   vpl::color_format_fourcc input_fourcc = (impl_type == vpl::implementation_type::sw)
@@ -86,7 +86,7 @@ int main() {
 
   enc_params->set_RateControlMethod(vpl::rate_control_method::cqp);
   enc_params->set_frame_info(std::move(info));
-  enc_params->set_CodecId(vpl::codec_format_fourcc::hevc);
+  enc_params->set_CodecId(codec_type);
   enc_params->set_IOPattern((kUseVideoMemory) ? vpl::io_pattern::in_device_memory
                                               : vpl::io_pattern::in_system_memory);
 
