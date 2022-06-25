@@ -12,6 +12,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <map>
 
 #include "cxxopts.hpp"
 #include "vpl/preview/vpl.hpp"
@@ -31,16 +32,28 @@ static void writeEncodedStream(std::shared_ptr<vpl::bitstream_as_dst> bits,
   return;
 }
 
+const std::map<std::string, vpl::codec_format_fourcc> codecs_format{
+    {"avc", vpl::codec_format_fourcc::avc},
+    {"hevc", vpl::codec_format_fourcc::hevc},
+    {"mpeg2", vpl::codec_format_fourcc::mpeg2},
+    {"vc1", vpl::codec_format_fourcc::vc1},
+    {"capture", vpl::codec_format_fourcc::capture},
+    {"vp9", vpl::codec_format_fourcc::vp9},
+    {"av1", vpl::codec_format_fourcc::avc},
+};
+
 int main(int argc, char** argv) {
   cxxopts::Options options{"Encode app", "oneVPL encode application."};
-  options.add_options()("i,input", "Input file", cxxopts::value<std::string>())(
-      "o,output", "Output file", cxxopts::value<std::string>())(
-      "h,height", "Height", cxxopts::value<int>()->default_value("0"))(
-      "w,width", "Width", cxxopts::value<int>()->default_value("0"))(
-      "f,frame-rate", "Frame rate", cxxopts::value<int>()->default_value("30"))(
-      "c,codec-type", "Codec type", cxxopts::value<int>()->default_value("30"))(
-      "use-hw", "Use hardware implementation", cxxopts::value<bool>()->default_value("false"))(
-      "help", "Print usage");
+  options.add_options(
+      "hello_encode",
+      {{"i,input", "Input file", cxxopts::value<std::string>()},
+       {"o,output", "Output file", cxxopts::value<std::string>()},
+       {"h,height", "Height", cxxopts::value<int>()->default_value("0")},
+       {"w,width", "Width", cxxopts::value<int>()->default_value("0")},
+       {"r,rate", "Set frame rate", cxxopts::value<int>()->default_value("30")},
+       {"c,codec-type", "Codec type", cxxopts::value<std::string>()->default_value("hevc")},
+       {"use-hw", "Use hardware implementation", cxxopts::value<bool>()->default_value("false")},
+       {"help", "Print usage"}});
   auto result = options.parse(argc, argv);
 
   if (result.count("help")) {
@@ -50,9 +63,10 @@ int main(int argc, char** argv) {
   const bool use_hw_impl = result["use-hw"].as<bool>();
   const int frame_height = result["height"].as<int>();
   const int frame_width = result["width"].as<int>();
-  const int frame_rate = result["frame-rate"].as<int>();
+  const int frame_rate = result["rate"].as<int>();
   const std::string input_filename = result["input"].as<std::string>();
   const std::string output_filename = result["output"].as<std::string>();
+  const auto codec_type = codecs_format.at(result["codec-type"].as<std::string>());
 
   // Setup input and output files
   std::ifstream input_file{input_filename, std::ios_base::in | std::ios_base::binary};
@@ -69,7 +83,6 @@ int main(int argc, char** argv) {
 
   int frame_num = 0;
   bool is_stillgoing = true;
-  auto codec_type = vpl::codec_format_fourcc::hevc;
   vpl::implementation_type impl_type{use_hw_impl ? vpl::implementation_type::hw
                                                  : vpl::implementation_type::sw};
 
