@@ -74,7 +74,7 @@ jobs:
 
       - name: Run encode example (C++)
         run: |
-          ./hello_encode
+          ./hello_encode -i cars_320x240.i420 -h 320 -w 240 --frame-rate 30 -o out.h265
 
       - name: Run encode example (Python)
         env:

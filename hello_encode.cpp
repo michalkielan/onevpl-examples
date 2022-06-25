@@ -13,17 +13,12 @@
 #include <fstream>
 #include <iostream>
 
+#include "cxxopts.hpp"
 #include "vpl/preview/vpl.hpp"
 
 #define ALIGN16(value) (((value + 15) >> 4) << 4)
 
-constexpr const char* kEncodedFileName = "out.h265";
-constexpr const char* kInputFilename = "cars_320x240.i420";
-constexpr const int kFrameRate = 30;
-constexpr const int kHeight = 240;
-constexpr const int kWidth = 320;
 constexpr const int kWait100Ms = 100;
-constexpr const bool kUseHwImplementation = false;
 constexpr const bool kUseVideoMemory = false;
 
 namespace vpl = oneapi::vpl;
@@ -36,16 +31,38 @@ static void writeEncodedStream(std::shared_ptr<vpl::bitstream_as_dst> bits,
   return;
 }
 
-int main() {
+int main(int argc, char** argv) {
+  cxxopts::Options options{"Encode app", "oneVPL encode application."};
+  options.add_options()("i,input", "Input file", cxxopts::value<std::string>())(
+      "o,output", "Output file", cxxopts::value<std::string>())(
+      "h,height", "Height", cxxopts::value<int>()->default_value("0"))(
+      "w,width", "Width", cxxopts::value<int>()->default_value("0"))(
+      "f,frame-rate", "Frame rate", cxxopts::value<int>()->default_value("30"))(
+      "c,codec-type", "Codec type", cxxopts::value<int>()->default_value("30"))(
+      "use-hw", "Use hardware implementation", cxxopts::value<bool>()->default_value("false"))(
+      "help", "Print usage");
+  auto result = options.parse(argc, argv);
+
+  if (result.count("help")) {
+    std::cout << options.help() << std::endl;
+    return 0;
+  }
+  const bool use_hw_impl = result["use-hw"].as<bool>();
+  const int frame_height = result["height"].as<int>();
+  const int frame_width = result["width"].as<int>();
+  const int frame_rate = result["frame-rate"].as<int>();
+  const std::string input_filename = result["input"].as<std::string>();
+  const std::string output_filename = result["output"].as<std::string>();
+
   // Setup input and output files
-  std::ifstream source{kInputFilename, std::ios_base::in | std::ios_base::binary};
-  if (!source) {
+  std::ifstream input_file{input_filename, std::ios_base::in | std::ios_base::binary};
+  if (!input_file) {
     std::cout << "Couldn't open input file" << std::endl;
     return 1;
   }
 
-  std::ofstream sink{kEncodedFileName, std::ios_base::out | std::ios_base::binary};
-  if (!sink) {
+  std::ofstream output_file{output_filename, std::ios_base::out | std::ios_base::binary};
+  if (!output_file) {
     std::cout << "Couldn't open output file" << std::endl;
     return 1;
   }
@@ -53,8 +70,8 @@ int main() {
   int frame_num = 0;
   bool is_stillgoing = true;
   auto codec_type = vpl::codec_format_fourcc::hevc;
-  vpl::implementation_type impl_type{kUseHwImplementation ? vpl::implementation_type::hw
-                                                          : vpl::implementation_type::sw};
+  vpl::implementation_type impl_type{use_hw_impl ? vpl::implementation_type::hw
+                                                 : vpl::implementation_type::sw};
 
   // Initialize VPL session for any implementation of HEVC/H265 encode
   // Default implementation selector. Selects first impl based on property list.
@@ -68,7 +85,7 @@ int main() {
                                               : vpl::color_format_fourcc::nv12;
 
   // create raw freames reader
-  vpl::raw_frame_file_reader reader(kWidth, kHeight, input_fourcc, source);
+  vpl::raw_frame_file_reader reader(frame_height, frame_width, input_fourcc, input_file);
 
   // Load session and initialize encoder
   auto encoder = std::make_shared<vpl::encode_session>(impl_sel, &reader);
@@ -77,11 +94,11 @@ int main() {
   auto enc_params = std::make_shared<vpl::encoder_video_param>();
   vpl::frame_info info{};
 
-  info.set_frame_rate({kFrameRate, 1});
-  info.set_frame_size({ALIGN16(kWidth), ALIGN16(kHeight)});
+  info.set_frame_rate({frame_rate, 1});
+  info.set_frame_size({ALIGN16(frame_height), ALIGN16(frame_width)});
   info.set_FourCC(input_fourcc);
   info.set_ChromaFormat(vpl::chroma_format_idc::yuv420);
-  info.set_ROI({{0, 0}, {kWidth, kHeight}});
+  info.set_ROI({{0, 0}, {frame_height, frame_width}});
   info.set_PicStruct(vpl::pic_struct::progressive);
 
   enc_params->set_RateControlMethod(vpl::rate_control_method::cqp);
@@ -99,7 +116,7 @@ int main() {
 
   std::cout << info << std::endl;
   std::cout << "Init done" << std::endl;
-  std::cout << "Encoding " << kInputFilename << " -> " << kEncodedFileName << std::endl;
+  std::cout << "Encoding " << input_filename << " -> " << output_filename << std::endl;
 
   // main encoder Loop
   while (is_stillgoing == true) {
@@ -117,7 +134,7 @@ int main() {
     case vpl::status::Ok: {
       std::chrono::duration<int, std::milli> waitduration(kWait100Ms);
       bitstream->wait_for(waitduration);
-      writeEncodedStream(bitstream, &sink);
+      writeEncodedStream(bitstream, &output_file);
       frame_num++;
     } break;
     case vpl::status::EndOfStreamReached:
