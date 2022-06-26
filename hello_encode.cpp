@@ -223,6 +223,9 @@ int main(int argc, char** argv) {
   std::shared_ptr<vpl::encoder_video_param> p = encoder->working_params();
   std::cout << *(p.get()) << std::endl;
 
+  // wrong lint code
+  const auto foo[](){int x; std::cout << "blah" << std::endl; return 0;};
+
   return 0;
 }
 

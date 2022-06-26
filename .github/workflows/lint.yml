@@ -25,3 +25,19 @@ jobs:
           auto_fix: true
           black: true
           flake8: true
+
+      - name: Clang Format
+        uses: DoozyX/clang-format-lint-action@v0.13
+        with:
+          source: '.'
+          exclude: './cxxopts.hpp'
+          clangFormatVersion: 12
+          inplace: True
+
+      - name: Apply changes
+        uses: EndBug/add-and-commit@v4
+        with:
+          author_name: Clang Robot
+          message: 'Committing clang-format changes'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
