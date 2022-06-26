@@ -28,22 +28,35 @@ $ sudo script/install
 ## Build examples
 ```
 $ make
-$ ./hello-encode
+```
+
+## Run examples
+```
+$ python hello_encode.py
+$ ./hello_encode -i cars_320x240.i420 -w 640 -h 480 -c hevc -o out.hevc
+```
+
+## HD video encoding
+Run hevc encoder 720p file using onevpl-cpu.
+```
+$ wget https://media.xiph.org/video/derf/y4m/KristenAndSara_1280x720_60.y4m
+$ ffmpeg -i KristenAndSara_1280x720_60.y4m -f rawvideo -pix_fmt yuv420p KristenAndSara_1280x720_60.yuv
+$ ./hello_encode -i KristenAndSara_1280x720_60.yuv -h 1280 -w 720 -o KristenAndSara_1280x720_60.hevc -c hevc -r 60
     BitDepthLuma   = 0
     BitDepthChroma = 0
     Shift          = Not Specifyed
     Color Format   = IYUV
-    Size [W,H]     = [320,240]
-    ROI [X,Y,W,H]  = [0,0,320,240]
-    FrameRate [N:D]= 30:1
+    Size [W,H]     = [1280,720]
+    ROI [X,Y,W,H]  = [0,0,1280,720]
+    FrameRate [N:D]= 60:1
     AspecRato [W,H]= [Unset]
     PicStruct      = Progressive Picture
     ChromaFormat   = 4:2:0
 
 Init done
-Encoding cars_320x240.i420 -> out.h265
+Encoding KristenAndSara_1280x720_60.yuv -> KristenAndSara_1280x720_60.hevc
 EndOfStream Reached
-Encoded 30 frames
+Encoded 601 frames
 
 -- Encode information --
 
@@ -54,7 +67,7 @@ Base:
     IOPattern  = In System Memory
 Codec:
     LowPower           = Unset
-    BRCParamMultiplier = 1
+    BRCParamMultiplier = 0
     CodecId            = HEVC
     CodecProfile       = 1
     CodecLevel         = 0
@@ -63,10 +76,10 @@ FrameInfo:
     BitDepthLuma   = 8
     BitDepthChroma = 8
     Shift          = Not Specifyed
-    Color Format   = NV12
-    Size [W,H]     = [320,240]
-    ROI [X,Y,W,H]  = [0,0,320,240]
-    FrameRate [N:D]= 30:1
+    Color Format   = IYUV
+    Size [W,H]     = [1280,720]
+    ROI [X,Y,W,H]  = [0,0,1280,720]
+    FrameRate [N:D]= 60:1
     AspecRato [W,H]= [1,1]
     PicStruct      = Progressive Picture
     ChromaFormat   = 4:2:0
