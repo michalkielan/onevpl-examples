@@ -223,6 +223,8 @@ int main(int argc, char** argv) {
   std::shared_ptr<vpl::encoder_video_param> p = encoder->working_params();
   std::cout << *(p.get()) << std::endl;
 
+  int x; int y; int z; int xyz; int abcd;
+
   return 0;
 }
 
