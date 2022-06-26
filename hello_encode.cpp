@@ -32,7 +32,7 @@ static void writeEncodedStream(std::shared_ptr<vpl::bitstream_as_dst> bits,
   return;
 }
 
-const std::map<std::string, vpl::codec_format_fourcc> codecs_format{
+const std::map<std::string, vpl::codec_format_fourcc> codec_formats{
     {"avc", vpl::codec_format_fourcc::avc},
     {"hevc", vpl::codec_format_fourcc::hevc},
     {"mpeg2", vpl::codec_format_fourcc::mpeg2},
@@ -40,6 +40,51 @@ const std::map<std::string, vpl::codec_format_fourcc> codecs_format{
     {"capture", vpl::codec_format_fourcc::capture},
     {"vp9", vpl::codec_format_fourcc::vp9},
     {"av1", vpl::codec_format_fourcc::avc},
+};
+
+const std::map<std::string, vpl::chroma_format_idc> chroma_formats{
+    {"monochrome", vpl::chroma_format_idc::monochrome},
+    {"yuv420", vpl::chroma_format_idc::yuv420},
+    {"yuv422", vpl::chroma_format_idc::yuv422},
+    {"yuv444", vpl::chroma_format_idc::yuv444},
+    {"yuv400", vpl::chroma_format_idc::yuv400},
+    {"yuv411", vpl::chroma_format_idc::yuv411},
+    {"yuv422h", vpl::chroma_format_idc::yuv422h},
+    {"yuv422v", vpl::chroma_format_idc::yuv422v},
+};
+
+const std::map<std::string, vpl::color_format_fourcc> color_formats{
+    {"nv12", vpl::color_format_fourcc::nv12},
+    {"yv12", vpl::color_format_fourcc::yv12},
+    {"nv16", vpl::color_format_fourcc::nv16},
+    {"yuy2", vpl::color_format_fourcc::yuy2},
+    {"rgb465", vpl::color_format_fourcc::rgb465},
+    {"rgbp", vpl::color_format_fourcc::rgbp},
+    {"rgb3", vpl::color_format_fourcc::rgb3},
+    {"bgra", vpl::color_format_fourcc::bgra},
+    {"p8", vpl::color_format_fourcc::p8},
+    {"p8_texture", vpl::color_format_fourcc::p8_texture},
+    {"p010", vpl::color_format_fourcc::p010},
+    {"p016", vpl::color_format_fourcc::p016},
+    {"p210", vpl::color_format_fourcc::p210},
+    {"bgr4", vpl::color_format_fourcc::bgr4},
+    {"a2rgb10", vpl::color_format_fourcc::a2rgb10},
+    {"argb16", vpl::color_format_fourcc::argb16},
+    {"abgr16", vpl::color_format_fourcc::abgr16},
+    {"r16", vpl::color_format_fourcc::r16},
+    {"ayuv", vpl::color_format_fourcc::ayuv},
+    {"ayuv_rgb4", vpl::color_format_fourcc::ayuv_rgb4},
+    {"uyvy", vpl::color_format_fourcc::uyvy},
+    {"y210", vpl::color_format_fourcc::y210},
+    {"y410", vpl::color_format_fourcc::y410},
+    {"y216", vpl::color_format_fourcc::y216},
+    {"y416", vpl::color_format_fourcc::y416},
+    {"nv21", vpl::color_format_fourcc::nv21},
+    {"i420", vpl::color_format_fourcc::i420},
+    {"i010", vpl::color_format_fourcc::i010},
+    {"i210", vpl::color_format_fourcc::i210},
+    {"i422", vpl::color_format_fourcc::i422},
+    {"bgrp", vpl::color_format_fourcc::bgrp},
 };
 
 int main(int argc, char** argv) {
@@ -52,6 +97,8 @@ int main(int argc, char** argv) {
        {"w,width", "Width", cxxopts::value<int>()->default_value("0")},
        {"r,rate", "Set frame rate", cxxopts::value<int>()->default_value("30")},
        {"c,codec-type", "Codec type", cxxopts::value<std::string>()->default_value("hevc")},
+       {"color-format", "Color format", cxxopts::value<std::string>()},
+       {"chroma-format", "Chroma format", cxxopts::value<std::string>()->default_value("yuv420")},
        {"use-hw", "Use hardware implementation", cxxopts::value<bool>()->default_value("false")},
        {"help", "Print usage"}});
   auto result = options.parse(argc, argv);
@@ -66,7 +113,8 @@ int main(int argc, char** argv) {
   const int frame_rate = result["rate"].as<int>();
   const std::string input_filename = result["input"].as<std::string>();
   const std::string output_filename = result["output"].as<std::string>();
-  const auto codec_type = codecs_format.at(result["codec-type"].as<std::string>());
+  const auto codec_type = codec_formats.at(result["codec-type"].as<std::string>());
+  const auto chroma_format = chroma_formats.at(result["chroma-format"].as<std::string>());
 
   // Setup input and output files
   std::ifstream input_file{input_filename, std::ios_base::in | std::ios_base::binary};
@@ -96,6 +144,9 @@ int main(int argc, char** argv) {
   vpl::color_format_fourcc input_fourcc = (impl_type == vpl::implementation_type::sw)
                                               ? vpl::color_format_fourcc::i420
                                               : vpl::color_format_fourcc::nv12;
+  if (result.count("color-format")) {
+    input_fourcc = color_formats.at(result["color-format"].as<std::string>());
+  }
 
   // create raw freames reader
   vpl::raw_frame_file_reader reader(frame_height, frame_width, input_fourcc, input_file);
@@ -110,7 +161,7 @@ int main(int argc, char** argv) {
   info.set_frame_rate({frame_rate, 1});
   info.set_frame_size({ALIGN16(frame_height), ALIGN16(frame_width)});
   info.set_FourCC(input_fourcc);
-  info.set_ChromaFormat(vpl::chroma_format_idc::yuv420);
+  info.set_ChromaFormat(chroma_format);
   info.set_ROI({{0, 0}, {frame_height, frame_width}});
   info.set_PicStruct(vpl::pic_struct::progressive);
 
