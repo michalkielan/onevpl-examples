@@ -224,7 +224,11 @@ int main(int argc, char** argv) {
   std::cout << *(p.get()) << std::endl;
 
   // wrong lint code
-  const auto foo[](){int x; std::cout << "blah" << std::endl; return 0;};
+  const auto foo[]() {
+    int x;
+    std::cout << "blah" << std::endl;
+    return 0;
+  };
 
   return 0;
 }
