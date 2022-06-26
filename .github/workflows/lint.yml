@@ -30,7 +30,7 @@ jobs:
         uses: DoozyX/clang-format-lint-action@v0.13
         with:
           source: '.'
-          exclude: './cxxopts.hpp'
+          exclude: './third-party'
           clangFormatVersion: 12
           inplace: True
 
