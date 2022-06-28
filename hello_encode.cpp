@@ -10,6 +10,7 @@
 ///
 /// @file
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -24,12 +25,26 @@ constexpr const bool kUseVideoMemory = false;
 
 namespace vpl = oneapi::vpl;
 
-static void writeEncodedStream(std::shared_ptr<vpl::bitstream_as_dst> bits,
+struct FrameInfo {
+  size_t size;
+  long startime;
+  long stoptime;
+};
+
+static void writeEncodedStream(FrameInfo& frameInfo,
+                               std::shared_ptr<vpl::bitstream_as_dst> bits,
                                std::ofstream* fileStream) {
   auto [ptr, len] = bits->get_valid_data();
+  frameInfo.size = len;
   fileStream->write(reinterpret_cast<char*>(ptr), len);
   bits->set_DataLength(0);
   return;
+}
+
+static long timeSinceEpoch() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::system_clock::now().time_since_epoch())
+      .count();
 }
 
 const std::map<std::string, vpl::codec_format_fourcc> codec_formats{
@@ -129,8 +144,8 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  int frame_num = 0;
   bool is_stillgoing = true;
+  std::vector<FrameInfo> frames_info;
   vpl::implementation_type impl_type{use_hw_impl ? vpl::implementation_type::hw
                                                  : vpl::implementation_type::sw};
 
@@ -184,11 +199,14 @@ int main(int argc, char** argv) {
 
   // main encoder Loop
   while (is_stillgoing == true) {
+    FrameInfo frame_info{};
     vpl::status wrn = vpl::status::Ok;
 
     auto bitstream = std::make_shared<vpl::bitstream_as_dst>();
     try {
+      frame_info.startime = timeSinceEpoch();
       wrn = encoder->encode_frame(bitstream);
+      frame_info.stoptime = timeSinceEpoch();
     } catch (vpl::base_exception& e) {
       std::cout << "Encoder died: " << e.what() << std::endl;
       return -1;
@@ -198,8 +216,8 @@ int main(int argc, char** argv) {
     case vpl::status::Ok: {
       std::chrono::duration<int, std::milli> waitduration(kWait100Ms);
       bitstream->wait_for(waitduration);
-      writeEncodedStream(bitstream, &output_file);
-      frame_num++;
+      writeEncodedStream(frame_info, bitstream, &output_file);
+      frames_info.emplace_back(std::move(frame_info));
     } break;
     case vpl::status::EndOfStreamReached:
       std::cout << "EndOfStream Reached" << std::endl;
@@ -217,7 +235,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  std::cout << "Encoded " << frame_num << " frames" << std::endl;
+  std::cout << "Encoded " << frames_info.size() << " frames" << std::endl;
 
   std::cout << "\n-- Encode information --\n\n";
   std::shared_ptr<vpl::encoder_video_param> p = encoder->working_params();
