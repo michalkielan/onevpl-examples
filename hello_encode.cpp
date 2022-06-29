@@ -16,6 +16,7 @@
 #include <map>
 
 #include "cxxopts.hpp"
+#include "nlohmann/json.hpp"
 #include "vpl/preview/vpl.hpp"
 
 #define ALIGN16(value) (((value + 15) >> 4) << 4)
@@ -26,8 +27,9 @@ constexpr const bool kUseVideoMemory = false;
 namespace vpl = oneapi::vpl;
 
 struct FrameInfo {
+  int counter;
   size_t size;
-  long startime;
+  long starttime;
   long stoptime;
 };
 
@@ -45,6 +47,19 @@ static long timeSinceEpoch() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch())
       .count();
+}
+
+static void writeJson(const std::vector<FrameInfo>& framesInfo, const std::string jsonFilename) {
+  nlohmann::json frames_info;
+  for (const auto& frame_info : framesInfo) {
+    nlohmann::json frame_info_json{{"frame", frame_info.counter},
+                                   {"size", frame_info.size},
+                                   {"starttime", frame_info.starttime},
+                                   {"stoptime", frame_info.stoptime}};
+    frames_info.push_back(frame_info_json);
+  }
+  std::ofstream out_json_file{jsonFilename};
+  out_json_file << std::setw(4) << frames_info << std::endl;
 }
 
 const std::map<std::string, vpl::codec_format_fourcc> codec_formats{
@@ -204,7 +219,7 @@ int main(int argc, char** argv) {
 
     auto bitstream = std::make_shared<vpl::bitstream_as_dst>();
     try {
-      frame_info.startime = timeSinceEpoch();
+      frame_info.starttime = timeSinceEpoch();
       wrn = encoder->encode_frame(bitstream);
       frame_info.stoptime = timeSinceEpoch();
     } catch (vpl::base_exception& e) {
@@ -217,6 +232,7 @@ int main(int argc, char** argv) {
       std::chrono::duration<int, std::milli> waitduration(kWait100Ms);
       bitstream->wait_for(waitduration);
       writeEncodedStream(frame_info, bitstream, &output_file);
+      frame_info.counter = frames_info.size();
       frames_info.emplace_back(std::move(frame_info));
     } break;
     case vpl::status::EndOfStreamReached:
@@ -240,6 +256,7 @@ int main(int argc, char** argv) {
   std::cout << "\n-- Encode information --\n\n";
   std::shared_ptr<vpl::encoder_video_param> p = encoder->working_params();
   std::cout << *(p.get()) << std::endl;
+  writeJson(frames_info, "out.json");
 
   return 0;
 }
