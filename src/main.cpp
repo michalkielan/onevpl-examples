@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <chrono>
-#include <fstream>
 #include <iostream>
-#include <map>
 
 #include "cxxopts.hpp"
 #include "nlohmann/json.hpp"
@@ -14,7 +12,7 @@
 
 #define ALIGN16(value) (((value + 15) >> 4) << 4)
 
-constexpr const int kWait100Ms = 100;
+constexpr const int kTimeout100Ms = 100;
 constexpr const bool kUseVideoMemory = false;
 
 namespace vpl = oneapi::vpl;
@@ -151,7 +149,7 @@ int main(int argc, char** argv) {
 
     switch (wrn) {
     case vpl::status::Ok: {
-      std::chrono::duration<int, std::milli> waitduration(kWait100Ms);
+      std::chrono::duration<int, std::milli> waitduration(kTimeout100Ms);
       bitstream->wait_for(waitduration);
       write_encoded_stream(frame_info, bitstream, &output_file);
       frame_info.iframe = (bitstream->get_FrameType() & MFX_FRAMETYPE_I) ? 1 : 0;
