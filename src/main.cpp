@@ -64,13 +64,13 @@ int main(int argc, char** argv) {
   std::ifstream input_file{input_filename, std::ios_base::in | std::ios_base::binary};
   if (!input_file) {
     std::cout << "Couldn't open input file" << std::endl;
-    return 1;
+    return ENOENT;
   }
 
   std::ofstream output_file{output_filename, std::ios_base::out | std::ios_base::binary};
   if (!output_file) {
     std::cout << "Couldn't open output file" << std::endl;
-    return 1;
+    return ENOENT;
   }
 
   bool is_stillgoing = true;
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
     encoder->Init(enc_params.get());
   } catch (vpl::base_exception& e) {
     std::cout << "Encoder init failed: " << e.what() << std::endl;
-    return -1;
+    return EIO;
   }
 
   std::cout << info << std::endl;
@@ -149,13 +149,13 @@ int main(int argc, char** argv) {
       frame_info.stop_time = time_since_epoch();
     } catch (vpl::base_exception& e) {
       std::cout << "Encoder died: " << e.what() << std::endl;
-      return -1;
+      return EIO;
     }
 
     switch (wrn) {
     case vpl::status::Ok: {
-      std::chrono::duration<int, std::milli> waitduration(kTimeout100Ms);
-      bitstream->wait_for(waitduration);
+      std::chrono::duration<int, std::milli> timeout(kTimeout100Ms);
+      bitstream->wait_for(timeout);
       frame_info.size = bitstream->get_DataLength();
       write_encoded_stream(bitstream, &output_file);
       frame_info.iframe = (bitstream->get_FrameType() & MFX_FRAMETYPE_I) ? 1 : 0;
@@ -192,10 +192,9 @@ int main(int argc, char** argv) {
   std::cout << "Encoded " << frames_info.size() << " frames" << std::endl;
 
   std::cout << "\n-- Encode information --\n\n";
-  std::shared_ptr<vpl::encoder_video_param> p = encoder->working_params();
-  std::cout << *(p.get()) << std::endl;
+  std::shared_ptr<vpl::encoder_video_param> video_param = encoder->working_params();
+  std::cout << *(video_param.get()) << std::endl;
   Statistics stats{std::move(stats_data_frame)};
   stats.write("out.json");
-
   return 0;
 }
