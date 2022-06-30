@@ -58,3 +58,16 @@ const std::map<std::string, vpl::color_format_fourcc> color_formats{
     {"i422", vpl::color_format_fourcc::i422},
     {"bgrp", vpl::color_format_fourcc::bgrp},
 };
+
+const std::map<std::string, vpl::rate_control_method> bitrate_control_method{
+    {"cbr", vpl::rate_control_method::cbr},
+    {"vbr", vpl::rate_control_method::vbr},
+    {"cqp", vpl::rate_control_method::cqp},
+    {"avbr", vpl::rate_control_method::avbr},
+    {"la", vpl::rate_control_method::la},
+    {"icq", vpl::rate_control_method::icq},
+    {"vcm", vpl::rate_control_method::vcm},
+    {"la_icq", vpl::rate_control_method::la_icq},
+    {"la_hrd", vpl::rate_control_method::la_hrd},
+    {"qvbr", vpl::rate_control_method::qvbr},
+};
