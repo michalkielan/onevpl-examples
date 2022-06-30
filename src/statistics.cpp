@@ -21,6 +21,15 @@ void Statistics::write(std::string output_filename) {
                                    {"stoptime", frame_info.stop_time}};
     frames_info.push_back(frame_info_json);
   }
+  nlohmann::json settings{
+      {"codec", stats_data_frame_.settings.codec},
+      {"gop", stats_data_frame_.settings.gop},
+      {"fps", stats_data_frame_.settings.fps},
+      {"bitrate", stats_data_frame_.settings.bitrate},
+      {"mean_bitrate", stats_data_frame_.settings.mean_bitrate},
+      {"width", stats_data_frame_.settings.width},
+      {"height", stats_data_frame_.settings.height},
+  };
   nlohmann::json stats{{"id", stats_data_frame_.id},
                        {"description", stats_data_frame_.description},
                        {"test", stats_data_frame_.test},
@@ -31,6 +40,7 @@ void Statistics::write(std::string output_filename) {
                        {"framecount", stats_data_frame_.framecount},
                        {"encodedfile", stats_data_frame_.encoded_file},
                        {"sourcefile", stats_data_frame_.source_file},
+                       {"settings", settings},
                        {"frames", frames_info}};
   std::ofstream out_json_file{output_filename};
   out_json_file << std::setw(4) << stats << std::endl;
