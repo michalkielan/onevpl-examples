@@ -75,9 +75,9 @@ jobs:
 
       - name: Run encode example (C++)
         run: |
-          ./hello_encode -i cars_320x240.i420 -h 320 -w 240 -o out.h265
-          ./hello_encode -i cars_320x240.i420 -h 320 -w 240 -r 30 -c hevc -o out.h265
-          cat out.json | jq empty
+          ./hello_encode -i cars_320x240.i420 -h 320 -w 240
+          ./hello_encode -i cars_320x240.i420 -h 320 -w 240 -r 30 -c hevc -o out.hevc
+          cat cars_320x240.json | jq empty
 
       - name: Run encode example (Python)
         env:

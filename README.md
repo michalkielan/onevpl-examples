@@ -33,7 +33,7 @@ $ make
 ## Run examples
 ```
 $ python hello_encode.py
-$ ./hello_encode -i cars_320x240.i420 -w 640 -h 480 -c hevc -o out.hevc
+$ ./hello_encode -i cars_320x240.i420 -w 640 -h 480 -c hevc
 ```
 
 ## HD video encoding
@@ -41,7 +41,7 @@ Run hevc encoder 720p file using onevpl-cpu.
 ```
 $ wget https://media.xiph.org/video/derf/y4m/KristenAndSara_1280x720_60.y4m
 $ ffmpeg -i KristenAndSara_1280x720_60.y4m -f rawvideo -pix_fmt yuv420p KristenAndSara_1280x720_60.yuv
-$ ./hello_encode -i KristenAndSara_1280x720_60.yuv -h 1280 -w 720 -o KristenAndSara_1280x720_60.hevc -c hevc -r 60
+$ ./hello_encode -i KristenAndSara_1280x720_60.yuv -h 1280 -w 720 -c hevc -r 60
     BitDepthLuma   = 0
     BitDepthChroma = 0
     Shift          = Not Specifyed
