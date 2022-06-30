@@ -60,6 +60,7 @@ class Statistics {
   Statistics(StatsDataFrame stats_data_frame);
 
   void write(std::string output_filename);
+
  private:
   StatsDataFrame stats_data_frame_;
 };
