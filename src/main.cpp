@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
   options.add_options(
       "hello_encode",
       {{"i,input", "Input file", cxxopts::value<std::string>()},
-       {"o,output", "Output file", cxxopts::value<std::string>()},
+       {"o,output", "Output file", cxxopts::value<std::string>()->default_value("")},
        {"h,height", "Height", cxxopts::value<int>()->default_value("0")},
        {"w,width", "Width", cxxopts::value<int>()->default_value("0")},
        {"r,rate", "Set frame rate", cxxopts::value<int>()->default_value("30")},
@@ -56,9 +56,23 @@ int main(int argc, char** argv) {
   const int frame_width = result["width"].as<int>();
   const int frame_rate = result["rate"].as<int>();
   const std::string input_filename = result["input"].as<std::string>();
-  const std::string output_filename = result["output"].as<std::string>();
   const auto codec_type = codec_formats.at(result["codec-type"].as<std::string>());
   const auto chroma_format = chroma_formats.at(result["chroma-format"].as<std::string>());
+
+  std::string output_filename{};
+  std::string output_stats_filename{};
+  const std::string encoded_file_ext = "." + result["codec-type"].as<std::string>();
+  const auto last_index = input_filename.find_last_of(".");
+  if (last_index == std::string::npos) {
+    output_filename = input_filename + encoded_file_ext;
+    output_stats_filename = input_filename + ".json";
+  } else {
+    output_filename = input_filename.substr(0, last_index) + encoded_file_ext;
+    output_stats_filename = input_filename.substr(0, last_index) + ".json";
+  }
+  if (result.count("output")) {
+    output_filename = result["output"].as<std::string>();
+  }
 
   // Setup input and output files
   std::ifstream input_file{input_filename, std::ios_base::in | std::ios_base::binary};
@@ -135,6 +149,7 @@ int main(int argc, char** argv) {
   std::cout << info << std::endl;
   std::cout << "Init done" << std::endl;
   std::cout << "Encoding " << input_filename << " -> " << output_filename << std::endl;
+  std::cout << "Statistics " << output_stats_filename << std::endl;
 
   const auto encoding_start_time = time_since_epoch();
   // main encoder Loop
@@ -195,6 +210,6 @@ int main(int argc, char** argv) {
   std::shared_ptr<vpl::encoder_video_param> video_param = encoder->working_params();
   std::cout << *(video_param.get()) << std::endl;
   Statistics stats{std::move(stats_data_frame)};
-  stats.write("out.json");
+  stats.write(output_stats_filename);
   return 0;
 }
