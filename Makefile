@@ -1,2 +1,9 @@
+SRC=src/*cpp
+CXXFLAGS=-std=c++17 -Wall -O2
+LDFLAGS=-lvpl -lva-drm -lva
+
 all:
-	$(CXX) -std=c++17 -Wall -I third-party -O2 src/main.cpp src/mapping.cpp -lvpl -lva-drm -lva -o hello_encode
+	$(CXX) $(CXXFLAGS) -I third-party $(SRC) $(LDFLAGS) -o hello_encode
+
+clean:
+	rm hello_encode
