@@ -34,6 +34,29 @@ struct FrameInfo {
   long stoptime;
 };
 
+struct Settings {
+  std::string codec;
+  int gop;
+  int fps;
+  std::string bitrate;
+  std::string meanbitrate;
+  int width;
+  int height;
+};
+
+struct TestData {
+  std::string id;
+  std::string description;
+  std::string test;
+  std::string testdefinition;
+  std::string date;
+  std::string encapp_version;
+  int proctime;
+  int framecount;
+  std::string encodedfile;
+  std::string sourcefile;
+};
+
 static void writeEncodedStream(FrameInfo& frameInfo,
                                std::shared_ptr<vpl::bitstream_as_dst> bits,
                                std::ofstream* fileStream) {
@@ -50,7 +73,9 @@ static long timeSinceEpoch() {
       .count();
 }
 
-static void writeJson(const std::vector<FrameInfo>& framesInfo, const std::string jsonFilename) {
+static void writeJson(const TestData testData,
+                      const std::vector<FrameInfo>& framesInfo,
+                      const std::string jsonFilename) {
   nlohmann::json frames_info;
   for (const auto& frame_info : framesInfo) {
     nlohmann::json frame_info_json{{"frame", frame_info.counter},
@@ -62,8 +87,19 @@ static void writeJson(const std::vector<FrameInfo>& framesInfo, const std::strin
                                    {"stoptime", frame_info.stoptime}};
     frames_info.push_back(frame_info_json);
   }
+  nlohmann::json stats{{"id", testData.id},
+                       {"description", testData.description},
+                       {"test", testData.test},
+                       {"testdefinition", testData.testdefinition},
+                       {"date", testData.date},
+                       {"encapp_version", testData.encapp_version},
+                       {"proctime", testData.proctime},
+                       {"framecount", testData.framecount},
+                       {"encodedfile", testData.encodedfile},
+                       {"sourcefile", testData.sourcefile},
+                       {"frames", frames_info}};
   std::ofstream out_json_file{jsonFilename};
-  out_json_file << std::setw(4) << frames_info << std::endl;
+  out_json_file << std::setw(4) << stats << std::endl;
 }
 
 const std::map<std::string, vpl::codec_format_fourcc> codec_formats{
@@ -216,6 +252,7 @@ int main(int argc, char** argv) {
   std::cout << "Init done" << std::endl;
   std::cout << "Encoding " << input_filename << " -> " << output_filename << std::endl;
 
+  const auto encoding_starttime = timeSinceEpoch();
   // main encoder Loop
   while (is_stillgoing == true) {
     FrameInfo frame_info{};
@@ -255,13 +292,25 @@ int main(int argc, char** argv) {
       break;
     }
   }
+  const auto encoding_endtime = timeSinceEpoch();
+  TestData test_data;
+  test_data.id = "42";
+  test_data.description = "onevpl encoder test";
+  test_data.test = "test encoder parameters";
+  test_data.testdefinition = "n/a";
+  test_data.date = "today";
+  test_data.encapp_version = "1.6";
+  test_data.proctime = encoding_endtime - encoding_starttime;
+  test_data.framecount = frames_info.size();
+  test_data.encodedfile = output_filename;
+  test_data.sourcefile = input_filename;
 
   std::cout << "Encoded " << frames_info.size() << " frames" << std::endl;
 
   std::cout << "\n-- Encode information --\n\n";
   std::shared_ptr<vpl::encoder_video_param> p = encoder->working_params();
   std::cout << *(p.get()) << std::endl;
-  writeJson(frames_info, "out.json");
+  writeJson(test_data, frames_info, "out.json");
 
   return 0;
 }
