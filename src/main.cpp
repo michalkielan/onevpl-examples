@@ -43,6 +43,7 @@ int main(int argc, char** argv) {
        {"c,codec-type", "Codec type", cxxopts::value<std::string>()->default_value("hevc")},
        {"color-format", "Color format", cxxopts::value<std::string>()},
        {"chroma-format", "Chroma format", cxxopts::value<std::string>()->default_value("yuv420")},
+       {"bitrate-mode", "Bitrate mode", cxxopts::value<std::string>()->default_value("cqp")},
        {"use-hw", "Use hardware implementation", cxxopts::value<bool>()->default_value("false")},
        {"help", "Print usage"}});
   auto result = options.parse(argc, argv);
@@ -58,6 +59,7 @@ int main(int argc, char** argv) {
   const std::string input_filename = result["input"].as<std::string>();
   const auto codec_type = codec_formats.at(result["codec-type"].as<std::string>());
   const auto chroma_format = chroma_formats.at(result["chroma-format"].as<std::string>());
+  const auto bitrate_mode = bitrate_control_method.at(result["bitrate-mode"].as<std::string>());
 
   std::string output_filename{};
   std::string output_stats_filename{};
@@ -133,7 +135,7 @@ int main(int argc, char** argv) {
   info.set_ROI({{0, 0}, {frame_height, frame_width}});
   info.set_PicStruct(vpl::pic_struct::progressive);
 
-  enc_params->set_RateControlMethod(vpl::rate_control_method::cqp);
+  enc_params->set_RateControlMethod(bitrate_mode);
   enc_params->set_frame_info(std::move(info));
   enc_params->set_CodecId(codec_type);
   enc_params->set_IOPattern((kUseVideoMemory) ? vpl::io_pattern::in_device_memory
