@@ -10,6 +10,7 @@
 #include "vpl/preview/vpl.hpp"
 
 #include "mapping.hpp"
+#include "statistics.hpp"
 
 #define ALIGN16(value) (((value + 15) >> 4) << 4)
 
@@ -18,80 +19,20 @@ constexpr const bool kUseVideoMemory = false;
 
 namespace vpl = oneapi::vpl;
 
-struct FrameInfo {
-  int counter;
-  int iframe;
-  size_t size;
-  long starttime;
-  long stoptime;
-};
-
-struct Settings {
-  std::string codec;
-  int gop;
-  int fps;
-  std::string bitrate;
-  std::string meanbitrate;
-  int width;
-  int height;
-};
-
-struct TestData {
-  std::string id;
-  std::string description;
-  std::string test;
-  std::string testdefinition;
-  std::string date;
-  std::string encapp_version;
-  int proctime;
-  int framecount;
-  std::string encodedfile;
-  std::string sourcefile;
-};
-
-static void writeEncodedStream(FrameInfo& frameInfo,
-                               std::shared_ptr<vpl::bitstream_as_dst> bits,
-                               std::ofstream* fileStream) {
+static void write_encoded_stream(FrameInfo& frame_info,
+                                 std::shared_ptr<vpl::bitstream_as_dst> bits,
+                                 std::ofstream* encoded_file) {
   auto [ptr, len] = bits->get_valid_data();
-  frameInfo.size = len;
-  fileStream->write(reinterpret_cast<char*>(ptr), len);
+  frame_info.size = len; // TODO: Move it outside function
+  encoded_file->write(reinterpret_cast<char*>(ptr), len);
   bits->set_DataLength(0);
   return;
 }
 
-static long timeSinceEpoch() {
+static long time_since_epoch() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch())
       .count();
-}
-
-static void writeJson(const TestData testData,
-                      const std::vector<FrameInfo>& framesInfo,
-                      const std::string jsonFilename) {
-  nlohmann::json frames_info;
-  for (const auto& frame_info : framesInfo) {
-    nlohmann::json frame_info_json{{"frame", frame_info.counter},
-                                   {"iframe", frame_info.iframe},
-                                   {"size", frame_info.size},
-                                   {"pts", -1},
-                                   {"proctime", frame_info.stoptime - frame_info.starttime},
-                                   {"starttime", frame_info.starttime},
-                                   {"stoptime", frame_info.stoptime}};
-    frames_info.push_back(frame_info_json);
-  }
-  nlohmann::json stats{{"id", testData.id},
-                       {"description", testData.description},
-                       {"test", testData.test},
-                       {"testdefinition", testData.testdefinition},
-                       {"date", testData.date},
-                       {"encapp_version", testData.encapp_version},
-                       {"proctime", testData.proctime},
-                       {"framecount", testData.framecount},
-                       {"encodedfile", testData.encodedfile},
-                       {"sourcefile", testData.sourcefile},
-                       {"frames", frames_info}};
-  std::ofstream out_json_file{jsonFilename};
-  out_json_file << std::setw(4) << stats << std::endl;
 }
 
 int main(int argc, char** argv) {
@@ -165,6 +106,9 @@ int main(int argc, char** argv) {
   auto enc_params = std::make_shared<vpl::encoder_video_param>();
   vpl::frame_info info{};
 
+  // Statistics data frame
+  StatsDataFrame stats_data_frame{};
+
   info.set_frame_rate({frame_rate, 1});
   info.set_frame_size({ALIGN16(frame_height), ALIGN16(frame_width)});
   info.set_FourCC(input_fourcc);
@@ -189,7 +133,7 @@ int main(int argc, char** argv) {
   std::cout << "Init done" << std::endl;
   std::cout << "Encoding " << input_filename << " -> " << output_filename << std::endl;
 
-  const auto encoding_starttime = timeSinceEpoch();
+  const auto encoding_start_time = time_since_epoch();
   // main encoder Loop
   while (is_stillgoing == true) {
     FrameInfo frame_info{};
@@ -197,9 +141,9 @@ int main(int argc, char** argv) {
 
     auto bitstream = std::make_shared<vpl::bitstream_as_dst>();
     try {
-      frame_info.starttime = timeSinceEpoch();
+      frame_info.start_time = time_since_epoch();
       wrn = encoder->encode_frame(bitstream);
-      frame_info.stoptime = timeSinceEpoch();
+      frame_info.stop_time = time_since_epoch();
     } catch (vpl::base_exception& e) {
       std::cout << "Encoder died: " << e.what() << std::endl;
       return -1;
@@ -209,10 +153,10 @@ int main(int argc, char** argv) {
     case vpl::status::Ok: {
       std::chrono::duration<int, std::milli> waitduration(kWait100Ms);
       bitstream->wait_for(waitduration);
-      writeEncodedStream(frame_info, bitstream, &output_file);
+      write_encoded_stream(frame_info, bitstream, &output_file);
       frame_info.iframe = (bitstream->get_FrameType() & MFX_FRAMETYPE_I) ? 1 : 0;
-      frame_info.counter = frames_info.size();
-      frames_info.emplace_back(std::move(frame_info));
+      frame_info.counter = stats_data_frame.frame_info.size();
+      stats_data_frame.frame_info.emplace_back(std::move(frame_info));
     } break;
     case vpl::status::EndOfStreamReached:
       std::cout << "EndOfStream Reached" << std::endl;
@@ -229,25 +173,25 @@ int main(int argc, char** argv) {
       break;
     }
   }
-  const auto encoding_endtime = timeSinceEpoch();
-  TestData test_data;
-  test_data.id = "42";
-  test_data.description = "onevpl encoder test";
-  test_data.test = "test encoder parameters";
-  test_data.testdefinition = "n/a";
-  test_data.date = "today";
-  test_data.encapp_version = "1.6";
-  test_data.proctime = encoding_endtime - encoding_starttime;
-  test_data.framecount = frames_info.size();
-  test_data.encodedfile = output_filename;
-  test_data.sourcefile = input_filename;
+  const auto encoding_end_time = time_since_epoch();
+  stats_data_frame.id = "42";
+  stats_data_frame.description = "onevpl encoder test";
+  stats_data_frame.test = "test encoder parameters";
+  stats_data_frame.test_definition = "n/a";
+  stats_data_frame.date = "today";
+  stats_data_frame.encapp_version = "1.6";
+  stats_data_frame.proctime = encoding_end_time - encoding_start_time;
+  stats_data_frame.framecount = frames_info.size();
+  stats_data_frame.encoded_file = output_filename;
+  stats_data_frame.source_file = input_filename;
 
   std::cout << "Encoded " << frames_info.size() << " frames" << std::endl;
 
   std::cout << "\n-- Encode information --\n\n";
   std::shared_ptr<vpl::encoder_video_param> p = encoder->working_params();
   std::cout << *(p.get()) << std::endl;
-  writeJson(test_data, frames_info, "out.json");
+  Statistics stats{std::move(stats_data_frame)};
+  stats.write("out.json");
 
   return 0;
 }
