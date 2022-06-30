@@ -104,6 +104,13 @@ int main(int argc, char** argv) {
 
   // Statistics data frame
   StatsDataFrame stats_data_frame{};
+  stats_data_frame.settings.codec = result["codec-type"].as<std::string>();
+  stats_data_frame.settings.gop = -1;
+  stats_data_frame.settings.fps = frame_rate;
+  stats_data_frame.settings.bitrate = "";
+  stats_data_frame.settings.mean_bitrate = "";
+  stats_data_frame.settings.width = frame_width;
+  stats_data_frame.settings.height = frame_height;
 
   info.set_frame_rate({frame_rate, 1});
   info.set_frame_size({ALIGN16(frame_height), ALIGN16(frame_width)});
