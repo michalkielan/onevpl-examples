@@ -28,6 +28,7 @@ namespace vpl = oneapi::vpl;
 
 struct FrameInfo {
   int counter;
+  int iframe;
   size_t size;
   long starttime;
   long stoptime;
@@ -53,7 +54,7 @@ static void writeJson(const std::vector<FrameInfo>& framesInfo, const std::strin
   nlohmann::json frames_info;
   for (const auto& frame_info : framesInfo) {
     nlohmann::json frame_info_json{{"frame", frame_info.counter},
-                                   {"iframe", -1},
+                                   {"iframe", frame_info.iframe},
                                    {"size", frame_info.size},
                                    {"pts", -1},
                                    {"proctime", frame_info.stoptime - frame_info.starttime},
@@ -235,6 +236,7 @@ int main(int argc, char** argv) {
       std::chrono::duration<int, std::milli> waitduration(kWait100Ms);
       bitstream->wait_for(waitduration);
       writeEncodedStream(frame_info, bitstream, &output_file);
+      frame_info.iframe = (bitstream->get_FrameType() & MFX_FRAMETYPE_I) ? 1 : 0;
       frame_info.counter = frames_info.size();
       frames_info.emplace_back(std::move(frame_info));
     } break;
