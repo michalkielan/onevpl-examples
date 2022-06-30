@@ -17,11 +17,9 @@ constexpr const bool kUseVideoMemory = false;
 
 namespace vpl = oneapi::vpl;
 
-static void write_encoded_stream(FrameInfo& frame_info,
-                                 std::shared_ptr<vpl::bitstream_as_dst> bits,
+static void write_encoded_stream(std::shared_ptr<vpl::bitstream_as_dst> bits,
                                  std::ofstream* encoded_file) {
   auto [ptr, len] = bits->get_valid_data();
-  frame_info.size = len; // TODO: Move it outside function
   encoded_file->write(reinterpret_cast<char*>(ptr), len);
   bits->set_DataLength(0);
   return;
@@ -151,7 +149,8 @@ int main(int argc, char** argv) {
     case vpl::status::Ok: {
       std::chrono::duration<int, std::milli> waitduration(kTimeout100Ms);
       bitstream->wait_for(waitduration);
-      write_encoded_stream(frame_info, bitstream, &output_file);
+      frame_info.size = bitstream->get_DataLength();
+      write_encoded_stream(bitstream, &output_file);
       frame_info.iframe = (bitstream->get_FrameType() & MFX_FRAMETYPE_I) ? 1 : 0;
       frame_info.counter = stats_data_frame.frame_info.size();
       stats_data_frame.frame_info.emplace_back(std::move(frame_info));
