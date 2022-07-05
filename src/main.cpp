@@ -89,8 +89,17 @@ int main(int argc, char** argv) {
     return ENOENT;
   }
 
+  // Statistics data frame
+  StatsDataFrame stats_data_frame{};
+  stats_data_frame.settings.codec = result["codec-type"].as<std::string>();
+  stats_data_frame.settings.gop = -1;
+  stats_data_frame.settings.fps = frame_rate;
+  stats_data_frame.settings.bitrate = "";
+  stats_data_frame.settings.mean_bitrate = "";
+  stats_data_frame.settings.width = frame_width;
+  stats_data_frame.settings.height = frame_height;
+
   bool is_stillgoing = true;
-  std::vector<FrameInfo> frames_info;
   vpl::implementation_type impl_type{use_hw_impl ? vpl::implementation_type::hw
                                                  : vpl::implementation_type::sw};
 
@@ -117,16 +126,6 @@ int main(int argc, char** argv) {
   // Initialize encode parameters
   auto enc_params = std::make_shared<vpl::encoder_video_param>();
   vpl::frame_info info{};
-
-  // Statistics data frame
-  StatsDataFrame stats_data_frame{};
-  stats_data_frame.settings.codec = result["codec-type"].as<std::string>();
-  stats_data_frame.settings.gop = -1;
-  stats_data_frame.settings.fps = frame_rate;
-  stats_data_frame.settings.bitrate = "";
-  stats_data_frame.settings.mean_bitrate = "";
-  stats_data_frame.settings.width = frame_width;
-  stats_data_frame.settings.height = frame_height;
 
   info.set_frame_rate({frame_rate, 1});
   info.set_frame_size({ALIGN16(frame_height), ALIGN16(frame_width)});
@@ -202,11 +201,11 @@ int main(int argc, char** argv) {
   stats_data_frame.date = "today";
   stats_data_frame.encapp_version = "1.6";
   stats_data_frame.proctime = encoding_end_time - encoding_start_time;
-  stats_data_frame.framecount = frames_info.size();
+  stats_data_frame.framecount = stats_data_frame.frame_info.size();
   stats_data_frame.encoded_file = output_filename;
   stats_data_frame.source_file = input_filename;
 
-  std::cout << "Encoded " << frames_info.size() << " frames" << std::endl;
+  std::cout << "Encoded " << stats_data_frame.frame_info.size() << " frames" << std::endl;
 
   std::cout << "\n-- Encode information --\n\n";
   std::shared_ptr<vpl::encoder_video_param> video_param = encoder->working_params();
