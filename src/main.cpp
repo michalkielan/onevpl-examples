@@ -145,7 +145,6 @@ int main(int argc, char** argv) {
     try {
       frame_info.start_time = time_since_epoch();
       wrn = video_encoder.encode(bitstream);
-      frame_info.stop_time = time_since_epoch();
     } catch (vpl::base_exception& e) {
       std::cout << "Encoder died: " << e.what() << std::endl;
       return EIO;
@@ -155,6 +154,7 @@ int main(int argc, char** argv) {
     case vpl::status::Ok: {
       std::chrono::duration<int, std::milli> timeout(kTimeout100Ms);
       bitstream->wait_for(timeout);
+      frame_info.stop_time = time_since_epoch();
       frame_info.size = bitstream->get_DataLength();
       write_encoded_stream(bitstream, &output_file);
       frame_info.iframe = (bitstream->get_FrameType() & MFX_FRAMETYPE_I) ? 1 : 0;
