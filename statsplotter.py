@@ -23,7 +23,7 @@ for frame in stats["frames"]:
     frame_size.append(frame["size"])
     proc_time.append(frame["proctime"])
 
-fig, ax = plt.subplots()
+_, ax = plt.subplots()
 ax2 = ax.twinx()
 ax3 = ax.twinx()
 
@@ -33,12 +33,12 @@ plt.xlim(0, len(iframe))
 # Plot I frame interval
 ax.plot(iframe, color="red")
 ax.set_xlabel("frame count")
-ax.set_ylabel("is I-frame", color="blue")
+ax.set_ylabel("is I-frame", color="red")
 ax.set_ylim(bottom=0, top=max(iframe))
 
 # Plot Frame size in bytes
 ax2.plot(frame_size, color="blue")
-ax2.set_ylabel("frame size [bytes]", color="red")
+ax2.set_ylabel("frame size [bytes]", color="blue")
 ax2.set_ylim(bottom=0, top=max(frame_size))
 
 # Plot proc time in ms
