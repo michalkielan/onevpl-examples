@@ -9,11 +9,11 @@
 
 #include "mapping.hpp"
 #include "statistics.hpp"
+#include "video_encoder.hpp"
 
 #define ALIGN16(value) (((value + 15) >> 4) << 4)
 
 constexpr const int kTimeout100Ms = 100;
-constexpr const bool kUseVideoMemory = false;
 
 namespace vpl = oneapi::vpl;
 
@@ -109,7 +109,6 @@ int main(int argc, char** argv) {
                                   vpl::dprops::api_version(2, 5),
                                   vpl::dprops::encoder({vpl::dprops::codec_id(codec_type)})}};
 
-  vpl::ExtDecodeErrorReport err_report{};
   vpl::color_format_fourcc input_fourcc = (impl_type == vpl::implementation_type::sw)
                                               ? vpl::color_format_fourcc::i420
                                               : vpl::color_format_fourcc::nv12;
@@ -118,15 +117,11 @@ int main(int argc, char** argv) {
   }
 
   // create raw freames reader
-  vpl::raw_frame_file_reader reader(frame_height, frame_width, input_fourcc, input_file);
+  vpl::raw_frame_file_reader frame_file_reader(frame_height, frame_width, input_fourcc, input_file);
 
-  // Load session and initialize encoder
-  auto encoder = std::make_shared<vpl::encode_session>(impl_sel, &reader);
+  VideoEncoder video_encoder{impl_sel, &frame_file_reader};
 
-  // Initialize encode parameters
-  auto enc_params = std::make_shared<vpl::encoder_video_param>();
   vpl::frame_info info{};
-
   info.set_frame_rate({frame_rate, 1});
   info.set_frame_size({ALIGN16(frame_height), ALIGN16(frame_width)});
   info.set_FourCC(input_fourcc);
@@ -134,19 +129,7 @@ int main(int argc, char** argv) {
   info.set_ROI({{0, 0}, {frame_height, frame_width}});
   info.set_PicStruct(vpl::pic_struct::progressive);
 
-  enc_params->set_RateControlMethod(bitrate_mode);
-  enc_params->set_frame_info(std::move(info));
-  enc_params->set_CodecId(codec_type);
-  enc_params->set_IOPattern((kUseVideoMemory) ? vpl::io_pattern::in_device_memory
-                                              : vpl::io_pattern::in_system_memory);
-
-  try {
-    encoder->Init(enc_params.get());
-  } catch (vpl::base_exception& e) {
-    std::cout << "Encoder init failed: " << e.what() << std::endl;
-    return EIO;
-  }
-
+  video_encoder.init(std::move(info), codec_type, input_fourcc, bitrate_mode);
   std::cout << info << std::endl;
   std::cout << "Init done" << std::endl;
   std::cout << "Encoding " << input_filename << " -> " << output_filename << std::endl;
@@ -161,7 +144,7 @@ int main(int argc, char** argv) {
     auto bitstream = std::make_shared<vpl::bitstream_as_dst>();
     try {
       frame_info.start_time = time_since_epoch();
-      wrn = encoder->encode_frame(bitstream);
+      wrn = video_encoder.encode(bitstream);
       frame_info.stop_time = time_since_epoch();
     } catch (vpl::base_exception& e) {
       std::cout << "Encoder died: " << e.what() << std::endl;
@@ -208,7 +191,7 @@ int main(int argc, char** argv) {
   std::cout << "Encoded " << stats_data_frame.frame_info.size() << " frames" << std::endl;
 
   std::cout << "\n-- Encode information --\n\n";
-  std::shared_ptr<vpl::encoder_video_param> video_param = encoder->working_params();
+  const auto video_param = video_encoder.get_working_params();
   std::cout << *(video_param.get()) << std::endl;
   Statistics stats{std::move(stats_data_frame)};
   stats.write(output_stats_filename);
