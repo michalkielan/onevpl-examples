@@ -18,7 +18,7 @@ jobs:
           python-version: 3.8
 
       - name: Install Python dependencies
-        run: pip install pylint flake8
+        run: pip install pylint flake8 matplotlib
 
       - name: Install dependencies
         run: |
