@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <thread>
 
 #include "cxxopts.hpp"
 #include "nlohmann/json.hpp"
@@ -13,18 +14,19 @@
 #include "video_encoder/video_encoder.hpp"
 
 constexpr const int kTimeout100Ms = 100;
+constexpr const int kPoolSize = 9;
 
 namespace vpl = oneapi::vpl;
 
-static void write_encoded_stream(std::shared_ptr<vpl::bitstream_as_dst> bits,
-                                 std::ofstream* encoded_file) {
+void write_encoded_stream(std::shared_ptr<vpl::bitstream_as_dst> bits,
+                          std::ofstream* encoded_file) {
   auto [ptr, len] = bits->get_valid_data();
   encoded_file->write(reinterpret_cast<char*>(ptr), len);
   bits->set_DataLength(0);
   return;
 }
 
-static long time_since_epoch() {
+long time_since_epoch() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch())
       .count();
@@ -88,17 +90,6 @@ int main(int argc, char** argv) {
     return ENOENT;
   }
 
-  // Statistics data frame
-  StatsDataFrame stats_data_frame{};
-  stats_data_frame.settings.codec = result["codec-type"].as<std::string>();
-  stats_data_frame.settings.gop = -1;
-  stats_data_frame.settings.fps = frame_rate;
-  stats_data_frame.settings.bitrate = "";
-  stats_data_frame.settings.mean_bitrate = "";
-  stats_data_frame.settings.width = frame_width;
-  stats_data_frame.settings.height = frame_height;
-
-  bool is_stillgoing = true;
   vpl::implementation_type impl_type{use_hw_impl ? vpl::implementation_type::hw
                                                  : vpl::implementation_type::sw};
 
@@ -115,11 +106,6 @@ int main(int argc, char** argv) {
     input_fourcc = color_formats.at(result["color-format"].as<std::string>());
   }
 
-  // create raw freames reader
-  vpl::raw_frame_file_reader frame_file_reader(frame_height, frame_width, input_fourcc, input_file);
-
-  VideoEncoder video_encoder{impl_sel, &frame_file_reader};
-
   vpl::frame_info info{};
   info.set_frame_rate({frame_rate, 1});
   info.set_frame_size({ALIGN16(frame_height), ALIGN16(frame_width)});
@@ -128,71 +114,110 @@ int main(int argc, char** argv) {
   info.set_ROI({{0, 0}, {frame_height, frame_width}});
   info.set_PicStruct(vpl::pic_struct::progressive);
 
-  video_encoder.init(std::move(info), codec_type, bitrate_mode);
-  std::cout << info << std::endl;
-  std::cout << "Init done" << std::endl;
-  std::cout << "Encoding " << input_filename << " -> " << output_filename << std::endl;
-  std::cout << "Statistics " << output_stats_filename << std::endl;
+  std::vector<std::thread> pool;
+  for (int i = 0; i < kPoolSize; i++) {
+    pool.push_back(std::thread([=, &impl_sel]() {
+      bool is_stillgoing = true;
+      // Statistics data frame
+      StatsDataFrame stats_data_frame{};
+      stats_data_frame.settings.codec = result["codec-type"].as<std::string>();
+      stats_data_frame.settings.gop = -1;
+      stats_data_frame.settings.fps = frame_rate;
+      stats_data_frame.settings.bitrate = "";
+      stats_data_frame.settings.mean_bitrate = "";
+      stats_data_frame.settings.width = frame_width;
+      stats_data_frame.settings.height = frame_height;
+      // create raw freames reader
+      std::string in_filename = "cars_320x240_" + std::to_string(i) + ".i420";
+      std::string out_filename = "cars_320x240_" + std::to_string(i) + ".hevc";
+      std::string stats_filename = "cars_320x240_" + std::to_string(i) + ".json";
+      std::ifstream in_file{input_filename, std::ios_base::in | std::ios_base::binary};
+      std::ifstream int_file{input_filename, std::ios_base::in | std::ios_base::binary};
+      if (!in_file) {
+        std::cout << "Couldn't open input file" << std::endl;
+        return;
+      }
 
-  const auto encoding_start_time = time_since_epoch();
-  // main encoder Loop
-  while (is_stillgoing == true) {
-    FrameInfo frame_info{};
-    vpl::status wrn = vpl::status::Ok;
+      std::ofstream out_file{out_filename, std::ios_base::out | std::ios_base::binary};
+      if (!out_file) {
+        std::cout << "Couldn't open output file" << std::endl;
+        return;
+      }
+      vpl::raw_frame_file_reader frame_file_reader(
+          frame_height, frame_width, input_fourcc, in_file);
+      VideoEncoder video_encoder{impl_sel, &frame_file_reader};
+      video_encoder.init(std::move(info), codec_type, bitrate_mode);
+      std::cout << info << std::endl;
+      std::cout << "Init done"
+                << "[" << i << "]" << std::endl;
+      std::cout << "Encoding "
+                << "[" << i << "]" << in_filename << " -> " << out_filename << std::endl;
+      std::cout << "Statistics "
+                << "[" << i << "]" << stats_filename << std::endl;
 
-    auto bitstream = std::make_shared<vpl::bitstream_as_dst>();
-    try {
-      frame_info.start_time = time_since_epoch();
-      wrn = video_encoder.encode(bitstream);
-    } catch (vpl::base_exception& e) {
-      std::cout << "Encoder died: " << e.what() << std::endl;
-      return EIO;
-    }
+      const auto encoding_start_time = time_since_epoch();
+      // main encoder Loop
+      while (is_stillgoing == true) {
+        FrameInfo frame_info{};
+        vpl::status wrn = vpl::status::Ok;
 
-    switch (wrn) {
-    case vpl::status::Ok: {
-      std::chrono::duration<int, std::milli> timeout(kTimeout100Ms);
-      bitstream->wait_for(timeout);
-      frame_info.stop_time = time_since_epoch();
-      frame_info.size = bitstream->get_DataLength();
-      write_encoded_stream(bitstream, &output_file);
-      frame_info.iframe = (bitstream->get_FrameType() & MFX_FRAMETYPE_I) ? 1 : 0;
-      frame_info.counter = stats_data_frame.frame_info.size();
-      stats_data_frame.frame_info.emplace_back(std::move(frame_info));
-    } break;
-    case vpl::status::EndOfStreamReached:
-      std::cout << "EndOfStream Reached" << std::endl;
-      is_stillgoing = false;
-      break;
-    case vpl::status::DeviceBusy:
-      // For non-CPU implementations,
-      // Wait a few milliseconds then try again
-      std::cout << "DeviceBusy" << std::endl;
-      break;
-    default:
-      std::cout << "unknown status: " << static_cast<int>(wrn) << std::endl;
-      is_stillgoing = false;
-      break;
-    }
+        auto bitstream = std::make_shared<vpl::bitstream_as_dst>();
+        try {
+          frame_info.start_time = time_since_epoch();
+          wrn = video_encoder.encode(bitstream);
+        } catch (vpl::base_exception& e) {
+          std::cout << "Encoder died: " << e.what() << std::endl;
+          return;
+        }
+
+        switch (wrn) {
+        case vpl::status::Ok: {
+          std::chrono::duration<int, std::milli> timeout(kTimeout100Ms);
+          bitstream->wait_for(timeout);
+          frame_info.stop_time = time_since_epoch();
+          frame_info.size = bitstream->get_DataLength();
+          write_encoded_stream(bitstream, &out_file);
+          frame_info.iframe = (bitstream->get_FrameType() & MFX_FRAMETYPE_I) ? 1 : 0;
+          frame_info.counter = stats_data_frame.frame_info.size();
+          stats_data_frame.frame_info.emplace_back(std::move(frame_info));
+        } break;
+        case vpl::status::EndOfStreamReached:
+          std::cout << "EndOfStream Reached" << std::endl;
+          is_stillgoing = false;
+          break;
+        case vpl::status::DeviceBusy:
+          // For non-CPU implementations,
+          // Wait a few milliseconds then try again
+          std::cout << "DeviceBusy" << std::endl;
+          break;
+        default:
+          std::cout << "unknown status: " << static_cast<int>(wrn) << std::endl;
+          is_stillgoing = false;
+          break;
+        }
+      }
+      const auto encoding_end_time = time_since_epoch();
+      stats_data_frame.id = "42";
+      stats_data_frame.description = "onevpl encoder test";
+      stats_data_frame.test = "test encoder parameters";
+      stats_data_frame.test_definition = "n/a";
+      stats_data_frame.date = "today";
+      stats_data_frame.encapp_version = "1.6";
+      stats_data_frame.proctime = encoding_end_time - encoding_start_time;
+      stats_data_frame.framecount = stats_data_frame.frame_info.size();
+      stats_data_frame.encoded_file = out_filename;
+      stats_data_frame.source_file = in_filename;
+
+      std::cout << "Encoded " << stats_data_frame.frame_info.size() << " frames" << std::endl;
+
+      std::cout << "\n-- Encode information --\n\n";
+      const auto video_param = video_encoder.get_working_params();
+      std::cout << *(video_param.get()) << std::endl;
+      Statistics stats{std::move(stats_data_frame)};
+      stats.write(stats_filename);
+    }));
   }
-  const auto encoding_end_time = time_since_epoch();
-  stats_data_frame.id = "42";
-  stats_data_frame.description = "onevpl encoder test";
-  stats_data_frame.test = "test encoder parameters";
-  stats_data_frame.test_definition = "n/a";
-  stats_data_frame.date = "today";
-  stats_data_frame.encapp_version = "1.6";
-  stats_data_frame.proctime = encoding_end_time - encoding_start_time;
-  stats_data_frame.framecount = stats_data_frame.frame_info.size();
-  stats_data_frame.encoded_file = output_filename;
-  stats_data_frame.source_file = input_filename;
 
-  std::cout << "Encoded " << stats_data_frame.frame_info.size() << " frames" << std::endl;
-
-  std::cout << "\n-- Encode information --\n\n";
-  const auto video_param = video_encoder.get_working_params();
-  std::cout << *(video_param.get()) << std::endl;
-  Statistics stats{std::move(stats_data_frame)};
-  stats.write(output_stats_filename);
+  std::for_each(pool.begin(), pool.end(), [](std::thread& t) { t.join(); });
   return 0;
 }
