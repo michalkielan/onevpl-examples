@@ -41,7 +41,7 @@ jobs:
           cd libva
           ./autogen.sh
           ./configure
-          make
+          make -j$(nproc)
           sudo make install
 
       - name: Install onevpl

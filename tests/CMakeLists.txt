@@ -4,11 +4,11 @@ include_directories("../src")
 include_directories("../third-party")
 
 set(TEST_ENCODING_SRC
-  "test_encoding.cpp"
+  "video_encoder_test.cpp"
   "../src/mapping.cpp"
   "../src/video_encoder.cpp"
 )
 
-add_executable(test_encoding ${TEST_ENCODING_SRC})
-target_link_libraries(test_encoding VPL::dispatcher)
-add_test(NAME test_encoding COMMAND test_encoding)
+add_executable(video_encoder_test ${TEST_ENCODING_SRC})
+target_link_libraries(video_encoder_test VPL::dispatcher)
+add_test(NAME video_encoder_test COMMAND video_encoder_test)
