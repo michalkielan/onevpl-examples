@@ -32,7 +32,7 @@ jobs:
           flake8: true
 
       - name: Clang Format
-        uses: DoozyX/clang-format-lint-action@v0.13
+        uses: DoozyX/clang-format-lint-action@v0.14
         with:
           source: '.'
           exclude: './third-party'
