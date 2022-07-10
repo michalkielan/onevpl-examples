@@ -6,7 +6,7 @@
 #include "vpl/preview/vpl.hpp"
 
 #include "utils.hpp"
-#include "video_encoder.hpp"
+#include "video_encoder/video_encoder.hpp"
 
 namespace vpl = oneapi::vpl;
 

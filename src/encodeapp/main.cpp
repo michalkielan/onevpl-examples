@@ -7,10 +7,10 @@
 #include "nlohmann/json.hpp"
 #include "vpl/preview/vpl.hpp"
 
-#include "mapping.hpp"
-#include "statistics.hpp"
+#include "mapping/mapping.hpp"
+#include "statistics/statistics.hpp"
 #include "utils.hpp"
-#include "video_encoder.hpp"
+#include "video_encoder/video_encoder.hpp"
 
 constexpr const int kTimeout100Ms = 100;
 

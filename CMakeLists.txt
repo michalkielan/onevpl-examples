@@ -12,6 +12,7 @@ set(BUILD_TESTS ON CACHE BOOL "Build tests")
 find_package(VPL REQUIRED)
 
 include_directories("third-party")
+include_directories("src")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -19,10 +20,10 @@ set(CMAKE_CXX_FLAGS "-Werror -Wall -Wextra -Wpedantic")
 set(CMAKE_BUILD_TYPE Debug)
 
 set(SOURCES
-  "src/main.cpp"
-  "src/mapping.cpp"
-  "src/statistics.cpp"
-  "src/video_encoder.cpp"
+  "src/encodeapp/main.cpp"
+  "src/mapping/mapping.cpp"
+  "src/statistics/statistics.cpp"
+  "src/video_encoder/video_encoder.cpp"
 )
 
 add_executable(${TARGET} ${SOURCES})
