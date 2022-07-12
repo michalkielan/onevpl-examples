@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
   info.set_ROI({{0, 0}, {frame_height, frame_width}});
   info.set_PicStruct(vpl::pic_struct::progressive);
 
-  video_encoder.init(std::move(info), codec_type, input_fourcc, bitrate_mode);
+  video_encoder.init(std::move(info), codec_type, bitrate_mode);
   std::cout << info << std::endl;
   std::cout << "Init done" << std::endl;
   std::cout << "Encoding " << input_filename << " -> " << output_filename << std::endl;

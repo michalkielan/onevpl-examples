@@ -12,7 +12,6 @@ VideoEncoder::VideoEncoder(vpl::implementation_selector& impl_sel,
 
 void VideoEncoder::init(vpl::frame_info frame_info,
                         vpl::codec_format_fourcc codec_type,
-                        vpl::color_format_fourcc input_fourcc,
                         vpl::rate_control_method bitrate_mode) {
   auto enc_params = std::make_shared<vpl::encoder_video_param>();
   enc_params->set_RateControlMethod(bitrate_mode);
