@@ -11,7 +11,7 @@ jobs:
       steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -61,10 +61,6 @@ jobs:
           script/build
           sudo script/install
 
-      - name: Build examples
-        run: |
-          make
-
       - name: Python syntax check
         env:
           PYTHONPATH: /usr/local/lib/python
@@ -73,10 +69,17 @@ jobs:
           flake8 *.py --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 *.py --count --exit-zero --statistics
 
+      - name: Build examples
+        run: |
+          source /usr/local/etc/vpl/vars.sh
+          mkdir build && cd build
+          cmake -GNinja ..
+          ninja
+
       - name: Run encode example (C++)
         run: |
-          ./hello_encode -i cars_320x240.i420 -h 320 -w 240
-          ./hello_encode -i cars_320x240.i420 -h 320 -w 240 -r 30 -c hevc -o out.hevc
+          ./build/encodeapp -i cars_320x240.i420 -h 320 -w 240
+          ./build/encodeapp -i cars_320x240.i420 -h 320 -w 240 -r 30 -c hevc -o out.hevc
           cat cars_320x240.json | jq empty
 
       - name: Run encode example (Python)

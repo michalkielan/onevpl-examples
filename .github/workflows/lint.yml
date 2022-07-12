@@ -17,9 +17,13 @@ jobs:
           python-version: 3.8
 
       - name: Install Python dependencies
-        run: pip install black flake8
+        run: pip install black flake8 cmakelint
 
-      - name: Run linters
+      - name: Cmake Linters
+        run: |
+          cmakelint CMakeLists.txt
+
+      - name: Python Linters
         uses: wearerequired/lint-action@v2
         with:
           auto_fix: true

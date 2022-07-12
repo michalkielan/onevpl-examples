@@ -27,13 +27,15 @@ $ sudo script/install
 
 ## Build examples
 ```
+$ mkdir build && cd build
+$ cmake ..
 $ make
 ```
 
 ## Run examples
 ```
 $ python hello_encode.py
-$ ./hello_encode -i cars_320x240.i420 -w 640 -h 480 -c hevc
+$ ./build/encodeapp -i cars_320x240.i420 -w 640 -h 480 -c hevc
 ```
 
 ## HD video encoding
