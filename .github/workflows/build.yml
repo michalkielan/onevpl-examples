@@ -75,11 +75,12 @@ jobs:
           mkdir build && cd build
           cmake -GNinja ..
           ninja
+          ninja test
 
       - name: Run encode example (C++)
         run: |
-          ./build/encodeapp -i cars_320x240.i420 -h 320 -w 240
-          ./build/encodeapp -i cars_320x240.i420 -h 320 -w 240 -r 30 -c hevc -o out.hevc
+          ./build/encodeapp -i res/cars_320x240.i420 -h 320 -w 240
+          ./build/encodeapp -i res/cars_320x240.i420 -h 320 -w 240 -r 30 -c hevc -o out.hevc
           cat cars_320x240.json | jq empty
 
       - name: Run encode example (Python)
