@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#pragma once
+
 #include "vpl/preview/vpl.hpp"
 
 class VideoEncoder {

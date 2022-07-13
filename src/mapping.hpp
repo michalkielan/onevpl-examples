@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+#pragma once
+
 #include <map>
 
 #include "vpl/preview/vpl.hpp"
