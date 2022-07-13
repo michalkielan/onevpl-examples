@@ -22,6 +22,7 @@ jobs:
       - name: Cmake Linters
         run: |
           cmakelint CMakeLists.txt
+          cmakelint tests/CMakeLists.txt
 
       - name: Python Linters
         uses: wearerequired/lint-action@v2

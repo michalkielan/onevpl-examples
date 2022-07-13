@@ -20,7 +20,7 @@ import sys
 import pyvpl
 
 
-INPUT_FILENAME = "cars_320x240.i420"
+INPUT_FILENAME = "res/cars_320x240.i420"
 ENCODED_FILENAME = "out.h265"
 WIDTH = 320
 HEIGHT = 240

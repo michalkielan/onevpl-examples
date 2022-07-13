@@ -9,9 +9,8 @@
 
 #include "mapping.hpp"
 #include "statistics.hpp"
+#include "utils.hpp"
 #include "video_encoder.hpp"
-
-#define ALIGN16(value) (((value + 15) >> 4) << 4)
 
 constexpr const int kTimeout100Ms = 100;
 

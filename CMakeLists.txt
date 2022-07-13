@@ -5,6 +5,10 @@ cmake_minimum_required(VERSION 3.10)
 project(encodeapp)
 set(TARGET encodeapp)
 
+enable_testing()
+
+set(BUILD_TESTS ON CACHE BOOL "Build tests")
+
 find_package(VPL REQUIRED)
 
 include_directories("third-party")
@@ -24,3 +28,7 @@ set(SOURCES
 add_executable(${TARGET} ${SOURCES})
 
 target_link_libraries(${TARGET} VPL::dispatcher)
+
+if(BUILD_TESTS)
+  add_subdirectory("tests")
+endif()
