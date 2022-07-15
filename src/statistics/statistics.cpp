@@ -9,13 +9,13 @@
 Statistics::Statistics(StatsDataFrame stats_data_frame) :
   stats_data_frame_{std::move(stats_data_frame)} {}
 
-void Statistics::write(std::string output_filename) {
+void Statistics::write(std::ostream& output) const {
   nlohmann::json frames_info;
   for (const auto& frame_info : stats_data_frame_.frame_info) {
     nlohmann::json frame_info_json{{"frame", frame_info.counter},
                                    {"iframe", frame_info.iframe},
                                    {"size", frame_info.size},
-                                   {"pts", -1},
+                                   {"pts", frame_info.pts},
                                    {"proctime", frame_info.stop_time - frame_info.start_time},
                                    {"starttime", frame_info.start_time},
                                    {"stoptime", frame_info.stop_time}};
@@ -42,6 +42,5 @@ void Statistics::write(std::string output_filename) {
                        {"sourcefile", stats_data_frame_.source_file},
                        {"settings", settings},
                        {"frames", frames_info}};
-  std::ofstream out_json_file{output_filename};
-  out_json_file << std::setw(4) << stats << std::endl;
+  output << std::setw(4) << stats << std::endl;
 }

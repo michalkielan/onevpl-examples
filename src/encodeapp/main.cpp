@@ -88,6 +88,13 @@ int main(int argc, char** argv) {
     return ENOENT;
   }
 
+  std::ofstream output_stats_file{output_stats_filename,
+                                  std::ios_base::out | std::ios_base::binary};
+  if (!output_file) {
+    std::cout << "Couldn't open stats file" << std::endl;
+    return ENOENT;
+  }
+
   // Statistics data frame
   StatsDataFrame stats_data_frame{};
   stats_data_frame.settings.codec = result["codec-type"].as<std::string>();
@@ -193,6 +200,6 @@ int main(int argc, char** argv) {
   const auto video_param = video_encoder.get_working_params();
   std::cout << *(video_param.get()) << std::endl;
   Statistics stats{std::move(stats_data_frame)};
-  stats.write(output_stats_filename);
+  stats.write(output_stats_file);
   return 0;
 }
