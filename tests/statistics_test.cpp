@@ -87,4 +87,3 @@ TEST_CASE("When stats saved, read file and check if parameters are the same") {
     ++i;
   }
 }
-
