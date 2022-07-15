@@ -9,6 +9,7 @@ struct FrameInfo {
   int counter;
   int iframe;
   size_t size;
+  int pts;
   long start_time;
   long stop_time;
 };
@@ -61,8 +62,8 @@ class Statistics {
  public:
   Statistics(StatsDataFrame stats_data_frame);
 
-  void write(std::string output_filename);
+  void write(std::ostream& output) const;
 
  private:
-  StatsDataFrame stats_data_frame_;
+  const StatsDataFrame stats_data_frame_;
 };
