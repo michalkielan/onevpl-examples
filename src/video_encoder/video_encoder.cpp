@@ -21,8 +21,10 @@ void VideoEncoder::init(vpl::frame_info frame_info,
   enc_params->set_CodecId(codec_type);
   enc_params->set_IOPattern((kUseVideoMemory) ? vpl::io_pattern::in_device_memory
                                               : vpl::io_pattern::in_system_memory);
+
   if (ext_buffers) {
-    enc_params->set_extension_buffers(&ext_buffers, ext_buffers_count);
+    enc_params->set_extension_buffers(reinterpret_cast<mfxExtBuffer**>(ext_buffers),
+                                      ext_buffers_count);
   }
   encoder_->Init(enc_params.get());
 }
