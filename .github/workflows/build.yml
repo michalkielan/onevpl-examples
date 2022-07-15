@@ -46,7 +46,7 @@ jobs:
 
       - name: Install onevpl
         run: |
-          git clone -b v2022.1.5 https://github.com/oneapi-src/oneVPL onevpl
+          git clone -b v2022.1.6 https://github.com/oneapi-src/oneVPL onevpl
           cd onevpl
           mkdir build && cd build
           cmake -GNinja -DBUILD_PYTHON_BINDING=ON ..
@@ -55,7 +55,7 @@ jobs:
 
       - name: Install onevpl-cpu
         run: |
-          git clone -b v2022.1.5 https://github.com/oneapi-src/oneVPL-cpu onevpl-cpu
+          git clone -b v2022.1.6 https://github.com/oneapi-src/oneVPL-cpu onevpl-cpu
           cd onevpl-cpu
           source script/bootstrap
           script/build
