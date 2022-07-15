@@ -127,6 +127,17 @@ int main(int argc, char** argv) {
 
   VideoEncoder video_encoder{impl_sel, &frame_file_reader};
 
+  vpl::encoder_init_list encoder_init_list;
+  auto roi_config = std::make_unique<vpl::ExtEncoderROI>();
+  roi_config->get_ref().NumROI = 1;
+  roi_config->get_ref().ROIMode = MFX_ROI_MODE_QP_DELTA;
+  roi_config->get_ref().ROI[0].Left = 160;
+  roi_config->get_ref().ROI[0].Right = 640;
+  roi_config->get_ref().ROI[0].Top = 0;
+  roi_config->get_ref().ROI[0].Bottom = 320;
+  roi_config->get_ref().ROI[0].DeltaQP = -51;
+  encoder_init_list.add_buffer(roi_config.get());
+
   vpl::frame_info info{};
   info.set_frame_rate({frame_rate, 1});
   info.set_frame_size({ALIGN16(frame_height), ALIGN16(frame_width)});
@@ -135,7 +146,7 @@ int main(int argc, char** argv) {
   info.set_ROI({{0, 0}, {frame_height, frame_width}});
   info.set_PicStruct(vpl::pic_struct::progressive);
 
-  video_encoder.init(std::move(info), codec_type, bitrate_mode);
+  video_encoder.init(std::move(info), codec_type, bitrate_mode, encoder_init_list);
   std::cout << info << std::endl;
   std::cout << "Init done" << std::endl;
   std::cout << "Encoding " << input_filename << " -> " << output_filename << std::endl;
