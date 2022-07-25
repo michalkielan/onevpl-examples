@@ -83,19 +83,17 @@ TEST_CASE("When init encoder with external buffers, not crash") {
 
   VideoEncoder video_encoder{impl_sel, &frame_file_reader};
 
-  mfxExtEncoderROI roi_config, *roi_config_arr;
-  memset(&roi_config, 0, sizeof(roi_config));
-  roi_config.Header.BufferId = MFX_EXTBUFF_ENCODER_ROI;
-  roi_config.Header.BufferSz = sizeof(roi_config);
-  roi_config.NumROI = 1;
-  roi_config.ROIMode = MFX_ROI_MODE_QP_DELTA;
-  roi_config.ROI[0].Left = 16;
-  roi_config.ROI[0].Right = 64;
-  roi_config.ROI[0].Top = 0;
-  roi_config.ROI[0].Bottom = 32;
+  vpl::encoder_init_list encoder_init_list;
+  auto roi_config = std::make_unique<vpl::ExtEncoderROI>();
+  roi_config->get_ref().NumROI = 1;
+  roi_config->get_ref().ROIMode = MFX_ROI_MODE_QP_DELTA;
+  roi_config->get_ref().ROI[0].Left = 160;
+  roi_config->get_ref().ROI[0].Right = 640;
+  roi_config->get_ref().ROI[0].Top = 0;
+  roi_config->get_ref().ROI[0].Bottom = 320;
   // https://spec.oneapi.io/versions/latest/elements/oneVPL/source/API_ref/VPL_structs_encode.html?#_CPPv4N16mfxExtEncoderROI7DeltaQPE
-  roi_config.ROI[0].DeltaQP = -51;
-  roi_config_arr = &roi_config;
+  roi_config->get_ref().ROI[0].DeltaQP = -51;
+  encoder_init_list.add_buffer(roi_config.get());
 
   try {
     vpl::frame_info info{};
@@ -108,8 +106,7 @@ TEST_CASE("When init encoder with external buffers, not crash") {
     video_encoder.init(std::move(info),
                        vpl::codec_format_fourcc::hevc,
                        vpl::rate_control_method::cqp,
-                       reinterpret_cast<mfxExtBuffer*>(&roi_config_arr),
-                       1 /* number of extension buffers */);
+                       encoder_init_list);
   } catch (vpl::base_exception const& exc) {
     CHECK_MESSAGE(false, "Encoder init failed: ", std::string(exc.what()));
   }

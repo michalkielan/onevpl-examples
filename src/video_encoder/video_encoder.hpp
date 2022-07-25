@@ -12,8 +12,7 @@ class VideoEncoder {
   void init(oneapi::vpl::frame_info frame_info,
             oneapi::vpl::codec_format_fourcc codec_type,
             oneapi::vpl::rate_control_method bitrate_mode,
-            mfxExtBuffer* ext_buffers = nullptr,
-            int ext_buffers_count = 0);
+            oneapi::vpl::encoder_init_list encoder_init_list = {});
 
   oneapi::vpl::status encode(std::shared_ptr<oneapi::vpl::bitstream_as_dst> bitstream);
 
