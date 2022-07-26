@@ -149,8 +149,12 @@ int main(int argc, char** argv) {
 
     auto bitstream = std::make_shared<vpl::bitstream_as_dst>();
     try {
+      vpl::encoder_process_list encoder_process_list;
+      auto encode_ctrl =
+          std::make_unique<vpl::EncodeCtrl>(vpl::frame_type::i, 0 /* SkipFrame */, 0 /* QP */);
+      encoder_process_list.add_buffer(encode_ctrl.get());
       frame_info.start_time = time_since_epoch();
-      wrn = video_encoder.encode(bitstream);
+      wrn = video_encoder.encode(bitstream, encoder_process_list);
     } catch (vpl::base_exception& e) {
       std::cout << "Encoder died: " << e.what() << std::endl;
       return EIO;
