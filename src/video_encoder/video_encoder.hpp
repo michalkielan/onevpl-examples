@@ -14,7 +14,8 @@ class VideoEncoder {
             oneapi::vpl::rate_control_method bitrate_mode,
             oneapi::vpl::encoder_init_list encoder_init_list = {});
 
-  oneapi::vpl::status encode(std::shared_ptr<oneapi::vpl::bitstream_as_dst> bitstream);
+  oneapi::vpl::status encode(std::shared_ptr<oneapi::vpl::bitstream_as_dst> bitstream,
+                             oneapi::vpl::encoder_process_list encoder_process_list = {});
 
   std::shared_ptr<oneapi::vpl::encoder_video_param> get_working_params();
 

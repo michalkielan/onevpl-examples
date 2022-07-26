@@ -23,8 +23,9 @@ void VideoEncoder::init(vpl::frame_info frame_info,
   encoder_->Init(enc_params.get(), encoder_init_list);
 }
 
-vpl::status VideoEncoder::encode(std::shared_ptr<vpl::bitstream_as_dst> bitstream) {
-  return encoder_->encode_frame(bitstream);
+vpl::status VideoEncoder::encode(std::shared_ptr<vpl::bitstream_as_dst> bitstream,
+                                 vpl::encoder_process_list encoder_process_list) {
+  return encoder_->encode_frame(bitstream, encoder_process_list);
 }
 
 std::shared_ptr<vpl::encoder_video_param> VideoEncoder::get_working_params() {
