@@ -25,9 +25,6 @@ jobs:
           sudo apt-get install -y \
             build-essential \
             jq \
-            libdrm-dev \
-            libva-dev \
-            libva-drm2 \
             meson \
             nasm \
             ninja-build \
@@ -35,21 +32,18 @@ jobs:
             python3-pybind11 \
             yasm \
 
-      - name: Install libva
-        run: |
-          git clone -b 2.14.0 --depth=1 https://github.com/intel/libva libva
-          cd libva
-          ./autogen.sh
-          ./configure
-          make -j$(nproc)
-          sudo make install
-
       - name: Install onevpl
         run: |
           git clone -b v2022.2.0 https://github.com/oneapi-src/oneVPL onevpl
           cd onevpl
+          # Cherry pick libva fix
+          git config --global user.name "Github Actions"
+          git config --global user.email "actions@github.com"
+          git remote add libva-fix https://github.com/michalkielan/oneVPL.git
+          git fetch libva-fix
+          git cherry-pick 0719a86d30b9c53f3ed9e3a4429925fa631b7d41
           mkdir build && cd build
-          cmake -GNinja -DBUILD_PYTHON_BINDING=ON ..
+          cmake -GNinja -DBUILD_PYTHON_BINDING=ON -DLIBVA_SUPPORT=OFF ..
           ninja
           sudo ninja install
 
