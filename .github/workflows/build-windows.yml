@@ -1,0 +1,37 @@
+name: windows
+
+on: [push, pull_request]
+
+jobs:
+  windows:
+      runs-on: windows-2022
+      steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          choco install ninja cmake msys2 nasm
+          refreshenv
+
+      - name: Install onevpl
+        run: |
+          set VPL_INSTALL_DIR=D:\_vplinstall
+          git clone -b v2022.2.0 https://github.com/oneapi-src/oneVPL onevpl
+          cd onevpl
+          mkdir _build
+          mkdir D:\_vplinstall
+          cd _build
+          cmake .. -DLIBVA_SUPPORT=OFF -DCMAKE_INSTALL_PREFIX=D:\_vplinstall
+          cmake --build . --config Release
+          cmake --build . --config Release --target install
+
+      - name: Build examples
+        run: |
+          D:\_vplinstall\etc\vpl\vars.bat
+          mkdir build
+          cd build
+          cmake -GNinja ..
+          type D:/a/onevpl-examples/onevpl-examples/build/CMakeFiles/CMakeOutput.log
+          ninja
+          ninja test
