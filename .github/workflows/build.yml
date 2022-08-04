@@ -7,6 +7,10 @@ env:
 
 jobs:
   build:
+      strategy:
+        matrix:
+          compiler: [{cxx: clang++, cc: clang}, {cxx: g++, cc: gcc}, {cxx: icpx, cc: icx}]
+
       runs-on: ubuntu-20.04
       steps:
       - name: Checkout
@@ -20,10 +24,19 @@ jobs:
       - name: Install Python dependencies
         run: pip install pylint flake8 matplotlib
 
+      - name: Intel Apt repository
+        run: |
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt-get update
+
       - name: Install dependencies
         run: |
           sudo apt-get install -y \
             build-essential \
+            intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic \
             jq \
             meson \
             nasm \
@@ -31,6 +44,11 @@ jobs:
             pybind11-dev \
             python3-pybind11 \
             yasm \
+
+      - name: Setup Intel oneAPI environment
+        run: |
+          source /opt/intel/oneapi/setvars.sh
+          printenv >> $GITHUB_ENV
 
       - name: Install onevpl
         run: |
@@ -64,6 +82,9 @@ jobs:
           flake8 *.py --count --exit-zero --statistics
 
       - name: Build examples
+        env:
+          CC: ${{ matrix.compiler.cc}}
+          CXX: ${{ matrix.compiler.cxx}}
         run: |
           source /usr/local/etc/vpl/vars.sh
           mkdir build && cd build
