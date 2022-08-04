@@ -3,6 +3,8 @@
 include_directories("../src")
 include_directories("../third-party")
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-tautological-constant-compare")
+
 set(VIDEO_ENCODER_TEST_SRC
   "video_encoder_test.cpp"
   "../src/mapping/mapping.cpp"
