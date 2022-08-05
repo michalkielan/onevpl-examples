@@ -25,18 +25,19 @@ jobs:
         run: pip install pylint flake8 matplotlib
 
       - name: Intel Apt repository
+        if: matrix.compiler.cxx == 'icpx'
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
           sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
           rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
           echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt-get update
+          sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
 
       - name: Install dependencies
         run: |
           sudo apt-get install -y \
             build-essential \
-            intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic \
             jq \
             meson \
             nasm \
@@ -46,6 +47,7 @@ jobs:
             yasm \
 
       - name: Setup Intel oneAPI environment
+        if: matrix.compiler.cxx == 'icpx'
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
