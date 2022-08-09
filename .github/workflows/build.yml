@@ -3,6 +3,7 @@ name: build
 on: [push, pull_request]
 
 env:
+  ONEVPL_VERSION: v2022.2.1
   LD_LIBRARY_PATH: /usr/local/lib64:/usr/local/lib/
 
 jobs:
@@ -34,6 +35,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt-get update
           sudo apt-get install -y \
             build-essential \
             intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic \
@@ -52,7 +54,7 @@ jobs:
 
       - name: Install onevpl
         run: |
-          git clone -b v2022.2.0 https://github.com/oneapi-src/oneVPL onevpl
+          git clone -b $ONEVPL_VERSION https://github.com/oneapi-src/oneVPL onevpl
           cd onevpl
           # Cherry pick libva fix
           git config --global user.name "Github Actions"
@@ -67,7 +69,7 @@ jobs:
 
       - name: Install onevpl-cpu
         run: |
-          git clone -b v2022.2.0 https://github.com/oneapi-src/oneVPL-cpu onevpl-cpu
+          git clone -b $ONEVPL_VERSION https://github.com/oneapi-src/oneVPL-cpu onevpl-cpu
           cd onevpl-cpu
           source script/bootstrap
           script/build
